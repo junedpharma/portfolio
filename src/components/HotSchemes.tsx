@@ -2,15 +2,14 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { Product } from '@/data/products';
 import { Gift, PackageCheck } from 'lucide-react';
 import { ScrollReveal } from '@/components/ScrollReveal';
+import { useContent } from '@/context/ContentContext';
 
-interface HotSchemesProps {
-  products: Product[];
-}
+export const HotSchemes: React.FC = () => {
+  const { content } = useContent();
+  const { schemes } = content;
 
-export const HotSchemes: React.FC<HotSchemesProps> = ({ products }) => {
   return (
     <section id="schemes" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
       <ScrollReveal className="text-center max-w-3xl mx-auto mb-10 space-y-2">
@@ -20,7 +19,7 @@ export const HotSchemes: React.FC<HotSchemesProps> = ({ products }) => {
       </ScrollReveal>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {products.map((product) => (
+        {schemes.map((product) => (
           <ScrollReveal key={product.id}>
             <div className="bg-gradient-to-br from-teal-50/80 via-white to-teal-50/30 border border-teal-200/90 rounded-2xl p-4 sm:p-6 flex flex-col justify-between relative overflow-hidden border-t-4 border-t-teal-600 shadow-sm hover:shadow-xl hover:border-teal-500 transition-all duration-300 h-full group">
               
@@ -30,15 +29,15 @@ export const HotSchemes: React.FC<HotSchemesProps> = ({ products }) => {
                   {product.name}
                 </h3>
 
-                {/* Article Image Container — Full Size Display */}
+                {/* Article Image Container (If Available) */}
                 {product.articleImage && (
-                  <div className="w-full h-56 sm:h-64 rounded-xl overflow-hidden border border-teal-200/80 bg-white flex items-center justify-center shadow-md relative">
+                  <div className="w-full h-44 sm:h-48 rounded-xl overflow-hidden border border-teal-200/80 bg-gradient-to-b from-teal-100/50 to-white flex items-center justify-center p-3 shadow-inner">
                     <Image
                       src={product.articleImage}
                       alt={product.awardedArticle}
-                      width={600}
-                      height={450}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      width={400}
+                      height={300}
+                      className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                 )}

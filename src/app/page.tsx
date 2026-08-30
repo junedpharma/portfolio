@@ -7,7 +7,6 @@ import { NoticesSection } from '@/components/NoticesSection';
 import { HotSchemes } from '@/components/HotSchemes';
 import { SalesContacts } from '@/components/SalesContacts';
 import { Footer } from '@/components/Footer';
-import { PRODUCTS_DATA } from '@/data/products';
 
 export default function Home() {
   return (
@@ -19,7 +18,7 @@ export default function Home() {
       <main className="flex-1">
         <Hero />
         <NoticesSection />
-        <HotSchemes products={PRODUCTS_DATA} />
+        <HotSchemes />
         <SalesContacts />
       </main>
 

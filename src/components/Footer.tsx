@@ -1,9 +1,14 @@
 'use client';
 
 import React from 'react';
-import { Tablet, Phone, Mail, MapPin, Clock } from 'lucide-react';
+import { Tablet, Phone, Mail, MapPin, Clock, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { useContent } from '@/context/ContentContext';
 
 export const Footer: React.FC = () => {
+  const { content } = useContent();
+  const { managerName, managerTitle, phone, email, address, operatingHours } = content.branchInfo;
+
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 pt-12 pb-8 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,8 +23,8 @@ export const Footer: React.FC = () => {
                 <Tablet className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-extrabold text-white tracking-wide">JUNED PATEL</h3>
-                <p className="text-xs font-bold text-[#059669]">Branch Manager — ATC Pharma</p>
+                <h3 className="text-base font-extrabold text-white tracking-wide">{managerName}</h3>
+                <p className="text-xs font-bold text-[#059669]">{managerTitle}</p>
               </div>
             </div>
           </div>
@@ -30,14 +35,14 @@ export const Footer: React.FC = () => {
             <ul className="space-y-2.5 text-xs text-slate-300">
               <li className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-[#059669] shrink-0" />
-                <a href="tel:+919825012345" className="hover:text-white font-bold transition-colors">
-                  +91 98250 12345
+                <a href={`tel:${phone.replace(/[^0-9+]/g, '')}`} className="hover:text-white font-bold transition-colors">
+                  {phone}
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-[#059669] shrink-0" />
-                <a href="mailto:juned.patel@atcpharma.com" className="hover:text-white transition-colors">
-                  juned.patel@atcpharma.com
+                <a href={`mailto:${email}`} className="hover:text-white transition-colors">
+                  {email}
                 </a>
               </li>
             </ul>
@@ -48,21 +53,27 @@ export const Footer: React.FC = () => {
             <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">Branch Warehouse Address</h4>
             <div className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
               <MapPin className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
-              <span>
-                Commercial Pharma Plaza, Wholesale Medical Market, Central Beat Zone
-              </span>
+              <span>{address}</span>
             </div>
           </div>
 
-          {/* Operating Hours */}
+          {/* Operating Hours & Admin Link */}
           <div className="space-y-3">
             <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">Branch Hours</h4>
-            <div className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
+            <div className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed mb-3">
               <Clock className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
               <div>
-                <strong className="text-white block font-bold">Mon – Sat: 9:00 AM – 8:00 PM</strong>
-                <span className="text-slate-400">Sunday Closed (Holiday)</span>
+                <strong className="text-white block font-bold">{operatingHours}</strong>
               </div>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href="/admin"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-slate-300 hover:text-emerald-300 text-xs font-bold transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5 text-[#059669]" /> Admin Content Manager
+              </Link>
             </div>
           </div>
 

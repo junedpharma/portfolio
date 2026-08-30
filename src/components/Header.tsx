@@ -1,9 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tablet, Menu, X } from 'lucide-react';
+import { Tablet, Menu, X, Settings } from 'lucide-react';
+import Link from 'next/link';
+import { useContent } from '@/context/ContentContext';
 
 export const Header: React.FC = () => {
+  const { content } = useContent();
+  const { managerName, managerTitle } = content.branchInfo;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -24,10 +28,10 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-tight">
-              JUNED PATEL
+              {managerName}
             </h1>
             <p className="text-[10px] sm:text-xs font-bold text-[#059669] tracking-wide">
-              BRANCH MANAGER — ATC PHARMA
+              {managerTitle}
             </p>
           </div>
         </a>
@@ -38,6 +42,13 @@ export const Header: React.FC = () => {
           <a href="#notices" className="text-sm font-semibold text-slate-600 hover:text-[#059669] transition-colors">Branch Notices</a>
           <a href="#schemes" className="text-sm font-semibold text-slate-600 hover:text-[#059669] transition-colors">Schemes & Articles</a>
           <a href="#contacts" className="text-sm font-semibold text-slate-600 hover:text-[#059669] transition-colors">Sales Contacts</a>
+          <Link
+            href="/admin"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-[#059669] transition-colors flex items-center gap-1.5 text-xs font-bold border border-slate-200"
+            title="Admin Content Manager"
+          >
+            <Settings className="w-4 h-4" /> Admin Panel
+          </Link>
         </nav>
 
         {/* Mobile Hamburger Menu Button */}
@@ -81,6 +92,13 @@ export const Header: React.FC = () => {
           >
             Sales Contacts
           </a>
+          <Link
+            href="/admin"
+            onClick={closeMobileMenu}
+            className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 text-[#047857] font-bold text-sm border border-emerald-200"
+          >
+            <Settings className="w-4 h-4" /> Admin Content Panel
+          </Link>
         </nav>
       )}
     </header>
