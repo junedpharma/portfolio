@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useContent } from '@/context/ContentContext';
 import { SiteContent, NoticeItem, SchemeProduct, SalesRep } from '@/data/contentStore';
-import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon } from 'lucide-react';
+import { uploadFileToFirebaseStorage } from '@/lib/storage';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
@@ -11,14 +12,15 @@ export default function AdminPage() {
   const [formData, setFormData] = useState<SiteContent>(content);
   const [activeTab, setActiveTab] = useState<'branch' | 'notices' | 'schemes' | 'sales'>('branch');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Sync state when content updates
   React.useEffect(() => {
     setFormData(content);
   }, [content]);
 
-  const handleSave = () => {
-    updateContent(formData);
+  const handleSave = async () => {
+    await updateContent(formData);
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 3000);
   };
@@ -34,16 +36,18 @@ export default function AdminPage() {
     }));
   };
 
-  const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHeroImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          handleBranchChange('heroImage', event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      setIsUploading(true);
+      try {
+        const fileUrl = await uploadFileToFirebaseStorage(file, 'hero-images');
+        handleBranchChange('heroImage', fileUrl);
+      } catch (err) {
+        console.error('Hero image upload failed:', err);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -57,23 +61,25 @@ export default function AdminPage() {
     }));
   };
 
-  const handleNoticePDFUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNoticePDFUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData((prev) => ({
-            ...prev,
-            notices: prev.notices.map((notice) =>
-              notice.id === id
-                ? { ...notice, pdfUrl: event.target?.result as string, pdfName: file.name }
-                : notice
-            )
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
+      setIsUploading(true);
+      try {
+        const fileUrl = await uploadFileToFirebaseStorage(file, 'notice-pdfs');
+        setFormData((prev) => ({
+          ...prev,
+          notices: prev.notices.map((notice) =>
+            notice.id === id
+              ? { ...notice, pdfUrl: fileUrl, pdfName: file.name }
+              : notice
+          )
+        }));
+      } catch (err) {
+        console.error('PDF upload failed:', err);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -117,16 +123,18 @@ export default function AdminPage() {
     }));
   };
 
-  const handleArticleImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleArticleImageUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          handleSchemeChange(id, 'articleImage', event.target.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
+      setIsUploading(true);
+      try {
+        const fileUrl = await uploadFileToFirebaseStorage(file, 'article-images');
+        handleSchemeChange(id, 'articleImage', fileUrl);
+      } catch (err) {
+        console.error('Article image upload failed:', err);
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -254,7 +262,7 @@ export default function AdminPage() {
         {/* Hero Image File Picker */}
         <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
           <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-            <ImageIcon className="w-4 h-4 text-[#059669]" />Profile Image
+            <ImageIcon className="w-4 h-4 text-[#059669]" /> Profile Image
           </label>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <input
@@ -427,13 +435,6 @@ export default function AdminPage() {
                 onChange={(e) => handleArticleImageUpload(scheme.id, e)}
                 className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
               />
-              <input
-                type="text"
-                value={scheme.articleImage || ''}
-                onChange={(e) => handleSchemeChange(scheme.id, 'articleImage', e.target.value)}
-                placeholder="Or enter image URL path (/inhaler-jar.jpg)"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-600 mt-2"
-              />
             </div>
           </div>
         ))}
@@ -534,16 +535,18 @@ export default function AdminPage() {
               <ArrowLeft className="w-4 h-4" /> Live Website
             </Link>
             <h1 className="text-base sm:text-lg font-black text-white tracking-wide truncate">
-              ADMIN CONTENT MANAGER
+              ADMIN
             </h1>
           </div>
 
           {/* Desktop Save Button */}
           <button
             onClick={handleSave}
-            className="hidden sm:flex px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-black text-xs sm:text-sm items-center gap-2 shadow-md transition-all cursor-pointer"
+            disabled={isUploading}
+            className="hidden sm:flex px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-black text-xs sm:text-sm items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
           >
-            <Save className="w-4 h-4" /> Save Changes
+            {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Save Changes
           </button>
         </div>
       </header>
@@ -552,57 +555,63 @@ export default function AdminPage() {
       <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50">
         <button
           onClick={handleSave}
-          className="w-full py-3.5 px-6 rounded-2xl bg-[#059669] active:bg-[#047857] text-white font-black text-sm flex items-center justify-center gap-2.5 shadow-2xl border border-emerald-400/30 backdrop-blur-md cursor-pointer"
+          disabled={isUploading}
+          className="w-full py-3.5 px-6 rounded-2xl bg-[#059669] active:bg-[#047857] text-white font-black text-sm flex items-center justify-center gap-2.5 shadow-2xl border border-emerald-400/30 backdrop-blur-md cursor-pointer disabled:opacity-50"
         >
-          <Save className="w-5 h-5" /> Save Changes
+          {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+          Save Changes
         </button>
       </div>
 
       {/* Success Toast Notification */}
       {showSuccessToast && (
         <div className="fixed top-20 right-4 left-4 sm:left-auto sm:right-6 bg-[#059669] text-white px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center justify-center gap-2 font-bold text-xs sm:text-sm animate-bounce">
-          <CheckCircle2 className="w-5 h-5 shrink-0" /> All Content Changes Saved Successfully!
+          <CheckCircle2 className="w-5 h-5 shrink-0" /> All Content Changes Saved to Firestore & Storage!
         </div>
       )}
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8">
-
+        
         {/* Desktop Navigation Tabs (Visible on Desktop sm:flex) */}
         <div className="hidden sm:flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none">
           <button
             onClick={() => setActiveTab('branch')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'branch'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'branch'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            }`}
           >
             <Building2 className="w-4 h-4" /> Branch Info & Header
           </button>
           <button
             onClick={() => setActiveTab('notices')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'notices'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'notices'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            }`}
           >
             <Bell className="w-4 h-4" /> Notices ({formData.notices.length})
           </button>
           <button
             onClick={() => setActiveTab('schemes')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'schemes'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'schemes'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            }`}
           >
             <Gift className="w-4 h-4" /> Schemes & Articles ({formData.schemes.length})
           </button>
           <button
             onClick={() => setActiveTab('sales')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'sales'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
+              activeTab === 'sales'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            }`}
           >
             <Users className="w-4 h-4" /> Sales Reps ({formData.salesTeam.length})
           </button>
