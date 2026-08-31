@@ -4,6 +4,8 @@ export interface NoticeItem {
   badgeText: string;
   title: string;
   description: string;
+  pdfUrl?: string;
+  pdfName?: string;
 }
 
 export interface SchemeProduct {

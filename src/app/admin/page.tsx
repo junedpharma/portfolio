@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useContent } from '@/context/ContentContext';
 import { SiteContent, NoticeItem, SchemeProduct, SalesRep } from '@/data/contentStore';
-import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2 } from 'lucide-react';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, Upload, FileText, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
@@ -34,12 +34,54 @@ export default function AdminPage() {
     }));
   };
 
+  const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          handleBranchChange('heroImage', event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Notice Handlers
   const handleNoticeChange = (id: string, field: keyof NoticeItem, value: string) => {
     setFormData((prev) => ({
       ...prev,
       notices: prev.notices.map((notice) =>
         notice.id === id ? { ...notice, [field]: value } : notice
+      )
+    }));
+  };
+
+  const handleNoticePDFUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setFormData((prev) => ({
+            ...prev,
+            notices: prev.notices.map((notice) =>
+              notice.id === id
+                ? { ...notice, pdfUrl: event.target?.result as string, pdfName: file.name }
+                : notice
+            )
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveNoticePDF = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      notices: prev.notices.map((notice) =>
+        notice.id === id ? { ...notice, pdfUrl: '', pdfName: '' } : notice
       )
     }));
   };
@@ -73,6 +115,19 @@ export default function AdminPage() {
         scheme.id === id ? { ...scheme, [field]: value } : scheme
       )
     }));
+  };
+
+  const handleArticleImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          handleSchemeChange(id, 'articleImage', event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleAddScheme = () => {
@@ -212,7 +267,7 @@ export default function AdminPage() {
         {activeTab === 'branch' && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-8 space-y-6 shadow-xs">
             <h2 className="text-lg sm:text-xl font-black text-slate-900 border-b border-slate-100 pb-3">
-              Branch Manager & Contact Details
+              Branch Manager & Profile Photo
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -276,13 +331,30 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">Hero Image Path / URL</label>
+              {/* Hero Image File Picker */}
+              <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#059669]" /> Hero Profile Image Picker
+                </label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleHeroImageUpload}
+                    className="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                  />
+                  {formData.branchInfo.heroImage && (
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg shrink-0 text-center">
+                      ✓ Image Loaded
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={formData.branchInfo.heroImage}
                   onChange={(e) => handleBranchChange('heroImage', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  placeholder="Or enter image URL path (/juned-patel.jpg)"
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-600 mt-2"
                 />
               </div>
             </div>
@@ -344,6 +416,32 @@ export default function AdminPage() {
                       onChange={(e) => handleNoticeChange(notice.id, 'description', e.target.value)}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium"
                     />
+                  </div>
+
+                  {/* Notice PDF File Upload */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-rose-600" /> Notice PDF Attachment
+                    </label>
+                    <input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => handleNoticePDFUpload(notice.id, e)}
+                      className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-rose-600 file:text-white hover:file:bg-rose-700 cursor-pointer"
+                    />
+                    {notice.pdfName && (
+                      <div className="flex items-center justify-between text-xs bg-rose-50 border border-rose-200 p-2 rounded-lg text-rose-900 mt-2">
+                        <span className="truncate font-bold flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5 text-rose-600 shrink-0" /> {notice.pdfName}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveNoticePDF(notice.id)}
+                          className="text-rose-700 font-bold hover:underline ml-2 cursor-pointer text-[11px]"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -408,14 +506,23 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Article Image Path (Optional)</label>
+                  {/* Article Image File Picker */}
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                      <ImageIcon className="w-4 h-4 text-[#059669]" /> Article Image File Picker
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleArticleImageUpload(scheme.id, e)}
+                      className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                    />
                     <input
                       type="text"
                       value={scheme.articleImage || ''}
                       onChange={(e) => handleSchemeChange(scheme.id, 'articleImage', e.target.value)}
-                      placeholder="/inhaler-jar.jpg"
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium"
+                      placeholder="Or enter image URL path (/inhaler-jar.jpg)"
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-medium text-slate-600 mt-2"
                     />
                   </div>
                 </div>
