@@ -254,7 +254,7 @@ export default function AdminPage() {
         {/* Hero Image File Picker */}
         <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
           <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-            <ImageIcon className="w-4 h-4 text-[#059669]" /> Hero Profile Image Picker
+            <ImageIcon className="w-4 h-4 text-[#059669]" />Profile Image
           </label>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <input
@@ -263,19 +263,7 @@ export default function AdminPage() {
               onChange={handleHeroImageUpload}
               className="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
             />
-            {formData.branchInfo.heroImage && (
-              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg shrink-0 text-center">
-                ✓ Image Loaded
-              </span>
-            )}
           </div>
-          <input
-            type="text"
-            value={formData.branchInfo.heroImage}
-            onChange={(e) => handleBranchChange('heroImage', e.target.value)}
-            placeholder="Or enter image URL path (/juned-patel.jpg)"
-            className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-600 mt-2"
-          />
         </div>
       </div>
     </div>
@@ -342,7 +330,7 @@ export default function AdminPage() {
             {/* Notice PDF File Upload */}
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
               <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-rose-600" /> Notice PDF Attachment
+                <FileText className="w-4 h-4 text-rose-600" /> PDF Attachment
               </label>
               <input
                 type="file"
@@ -579,46 +567,42 @@ export default function AdminPage() {
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8">
-        
+
         {/* Desktop Navigation Tabs (Visible on Desktop sm:flex) */}
         <div className="hidden sm:flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none">
           <button
             onClick={() => setActiveTab('branch')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'branch'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'branch'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+              }`}
           >
             <Building2 className="w-4 h-4" /> Branch Info & Header
           </button>
           <button
             onClick={() => setActiveTab('notices')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'notices'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'notices'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+              }`}
           >
             <Bell className="w-4 h-4" /> Notices ({formData.notices.length})
           </button>
           <button
             onClick={() => setActiveTab('schemes')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'schemes'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'schemes'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+              }`}
           >
             <Gift className="w-4 h-4" /> Schemes & Articles ({formData.schemes.length})
           </button>
           <button
             onClick={() => setActiveTab('sales')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'sales'
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'sales'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+              }`}
           >
             <Users className="w-4 h-4" /> Sales Reps ({formData.salesTeam.length})
           </button>

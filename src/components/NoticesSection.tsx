@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PackageCheck, AlertTriangle, Sparkles, FileText, Download } from 'lucide-react';
+import { PackageCheck, AlertTriangle, Sparkles, FileText } from 'lucide-react';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { useContent } from '@/context/ContentContext';
 
@@ -29,7 +29,7 @@ export const NoticesSection: React.FC = () => {
               }`}
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <span
                     className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-xs flex items-center gap-2 ${
                       notice.type === 'holiday' ? 'bg-amber-500' : 'bg-teal-600'
@@ -43,11 +43,18 @@ export const NoticesSection: React.FC = () => {
                     {notice.badgeText}
                   </span>
 
-                  {/* Red PDF Icon Badge if PDF Attached */}
+                  {/* Top Right Clickable PDF Icon Button */}
                   {notice.pdfUrl && (
-                    <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-600 text-white flex items-center gap-1.5 shadow-xs">
-                      <FileText className="w-3.5 h-3.5" /> PDF ATTACHED
-                    </span>
+                    <a
+                      href={notice.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={notice.pdfName ? `Open ${notice.pdfName}` : "Open PDF Attachment"}
+                      className="p-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-md hover:scale-110 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span className="hidden sm:inline">PDF</span>
+                    </a>
                   )}
                 </div>
 
@@ -59,23 +66,6 @@ export const NoticesSection: React.FC = () => {
                 <p className="text-sm sm:text-base text-slate-800 leading-relaxed font-semibold">
                   {notice.description}
                 </p>
-
-                {/* PDF Viewer / Download Button */}
-                {notice.pdfUrl && (
-                  <div className="pt-3 border-t border-slate-200/80">
-                    <a
-                      href={notice.pdfUrl}
-                      download={notice.pdfName || `${notice.title}.pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all cursor-pointer"
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>View & Download PDF ({notice.pdfName || 'Notice Circular'})</span>
-                      <Download className="w-3.5 h-3.5 ml-1" />
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
           </ScrollReveal>
