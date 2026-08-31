@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tablet, Phone, Mail, MapPin, Clock, Settings } from 'lucide-react';
-import Link from 'next/link';
+import { Tablet, Phone, Mail, MapPin, Clock } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
 
 export const Footer: React.FC = () => {
@@ -57,23 +56,14 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Operating Hours & Admin Link */}
+          {/* Operating Hours */}
           <div className="space-y-3">
             <h4 className="text-sm font-extrabold text-white uppercase tracking-wider">Branch Hours</h4>
-            <div className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed mb-3">
+            <div className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
               <Clock className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
               <div>
                 <strong className="text-white block font-bold">{operatingHours}</strong>
               </div>
-            </div>
-
-            <div className="pt-2">
-              <Link
-                href="/admin"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-emerald-900/60 border border-slate-700 text-slate-300 hover:text-emerald-300 text-xs font-bold transition-colors"
-              >
-                <Settings className="w-3.5 h-3.5 text-[#059669]" /> Admin Content Manager
-              </Link>
             </div>
           </div>
 
