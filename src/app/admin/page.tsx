@@ -27,7 +27,6 @@ export default function AdminPage() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
-  const [isSignUpMode, setIsSignUpMode] = useState(false);
   const [authError, setAuthError] = useState('');
   const [isSubmittingAuth, setIsSubmittingAuth] = useState(false);
 
@@ -52,11 +51,7 @@ export default function AdminPage() {
     setIsSubmittingAuth(true);
 
     try {
-      if (isSignUpMode) {
-        await createUserWithEmailAndPassword(auth, authEmail, authPassword);
-      } else {
-        await signInWithEmailAndPassword(auth, authEmail, authPassword);
-      }
+      await signInWithEmailAndPassword(auth, authEmail, authPassword);
     } catch (err: any) {
       console.error('Authentication Error:', err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
@@ -269,24 +264,13 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-          
+
           {/* Brand & Title */}
           <div className="text-center space-y-2.5">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#059669] to-[#0d9488] flex items-center justify-center mx-auto text-white shadow-lg shadow-emerald-600/20">
-              <Tablet className="w-6 h-6" />
-            </div>
             <div>
               <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
                 JUNED PATEL
               </h1>
-              <p className="text-xs font-bold text-[#059669]">
-                BRANCH MANAGER — ATC PHARMA
-              </p>
-            </div>
-            <div className="pt-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#047857] text-xs font-bold border border-emerald-200">
-                <Lock className="w-3.5 h-3.5" /> Admin Content Portal
-              </span>
             </div>
           </div>
 
@@ -308,7 +292,7 @@ export default function AdminPage() {
                 required
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                placeholder="admin@atcpharma.com"
+                placeholder="Enter your email address"
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:border-[#059669] focus:bg-white focus:outline-none transition-colors"
               />
             </div>
@@ -334,28 +318,11 @@ export default function AdminPage() {
             >
               {isSubmittingAuth ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
-              ) : isSignUpMode ? (
-                'Register Admin Account'
               ) : (
                 'Sign In to Admin Panel'
               )}
             </button>
           </form>
-
-          {/* Toggle Login vs Registration */}
-          <div className="text-center pt-3 border-t border-slate-100">
-            <button
-              onClick={() => {
-                setIsSignUpMode((prev) => !prev);
-                setAuthError('');
-              }}
-              className="text-xs font-bold text-slate-600 hover:text-[#059669] transition-colors cursor-pointer"
-            >
-              {isSignUpMode
-                ? 'Already registered? Switch to Sign In'
-                : 'First time admin setup? Register Account'}
-            </button>
-          </div>
 
           <div className="text-center">
             <Link href="/" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center gap-1">
@@ -765,46 +732,42 @@ export default function AdminPage() {
 
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8">
-        
+
         {/* Desktop Navigation Tabs (Visible on Desktop sm:flex) */}
         <div className="hidden sm:flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none">
           <button
             onClick={() => setActiveTab('branch')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'branch'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'branch'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
           >
             <Building2 className="w-4 h-4" /> Branch Info & Header
           </button>
           <button
             onClick={() => setActiveTab('notices')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'notices'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'notices'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
           >
             <Bell className="w-4 h-4" /> Notices ({formData.notices.length})
           </button>
           <button
             onClick={() => setActiveTab('schemes')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'schemes'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'schemes'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
           >
             <Gift className="w-4 h-4" /> Schemes & Articles ({formData.schemes.length})
           </button>
           <button
             onClick={() => setActiveTab('sales')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'sales'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-            }`}
+            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'sales'
+              ? 'bg-emerald-600 text-white shadow-md'
+              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
           >
             <Users className="w-4 h-4" /> Sales Reps ({formData.salesTeam.length})
           </button>
