@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PackageCheck, AlertTriangle, Sparkles, FileText, Download, Eye } from 'lucide-react';
+import { PackageCheck, AlertTriangle, Sparkles, FileText } from 'lucide-react';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { useContent } from '@/context/ContentContext';
 import { openOrDownloadPDF } from '@/utils/pdfHelper';
@@ -30,7 +30,7 @@ export const NoticesSection: React.FC = () => {
               }`}
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center justify-between gap-2">
                   <span
                     className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white shadow-xs flex items-center gap-2 ${
                       notice.type === 'holiday' ? 'bg-amber-500' : 'bg-teal-600'
@@ -44,25 +44,16 @@ export const NoticesSection: React.FC = () => {
                     {notice.badgeText}
                   </span>
 
-                  {/* Top Right Premium PDF Action Buttons */}
+                  {/* Single Top-Right Clickable PDF Button */}
                   {notice.pdfUrl && (
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => openOrDownloadPDF(notice.pdfUrl!, notice.pdfName || 'Branch_Notice.pdf', 'view')}
-                        title="View PDF Circular"
-                        className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-md hover:scale-105 transition-all flex items-center gap-1 text-xs font-bold cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>View PDF</span>
-                      </button>
-                      <button
-                        onClick={() => openOrDownloadPDF(notice.pdfUrl!, notice.pdfName || 'Branch_Notice.pdf', 'download')}
-                        title="Download PDF File"
-                        className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white shadow-md hover:scale-105 transition-all flex items-center justify-center cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => openOrDownloadPDF(notice.pdfUrl!, notice.pdfName || 'Branch_Notice.pdf', 'view')}
+                      title={notice.pdfName ? `Open ${notice.pdfName}` : "Open PDF Circular"}
+                      className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white shadow-md hover:scale-105 transition-all flex items-center gap-1.5 text-xs font-bold cursor-pointer"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>PDF</span>
+                    </button>
                   )}
                 </div>
 
