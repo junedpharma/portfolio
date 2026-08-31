@@ -3,11 +3,11 @@
 import React, { useState } from 'react';
 import { useContent } from '@/context/ContentContext';
 import { SiteContent, NoticeItem, SchemeProduct, SalesRep } from '@/data/contentStore';
-import { Save, Download, RotateCcw, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2 } from 'lucide-react';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
-  const { content, updateContent, resetToDefault, exportJSON } = useContent();
+  const { content, updateContent } = useContent();
   const [formData, setFormData] = useState<SiteContent>(content);
   const [activeTab, setActiveTab] = useState<'branch' | 'notices' | 'schemes' | 'sales'>('branch');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -129,37 +129,24 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 pb-16">
-      {/* Top Header */}
+    <div className="min-h-screen bg-slate-100 text-slate-900 pb-20">
+      {/* Mobile-Friendly Top Header */}
       <header className="bg-slate-900 text-white sticky top-0 z-50 border-b border-slate-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-bold">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-0 sm:h-16 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex items-center justify-between sm:justify-start gap-3">
+            <Link href="/" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-bold shrink-0">
               <ArrowLeft className="w-4 h-4" /> Live Website
             </Link>
-            <h1 className="text-lg font-black text-white tracking-wide">
+            <h1 className="text-base sm:text-lg font-black text-white tracking-wide truncate">
               ADMIN CONTENT MANAGER
             </h1>
           </div>
 
-          {/* Action Buttons */}
+          {/* Save Button Only */}
           <div className="flex items-center gap-2.5">
             <button
-              onClick={exportJSON}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Download updated JSON file (Ready for Firestore later)"
-            >
-              <Download className="w-3.5 h-3.5" /> Export JSON
-            </button>
-            <button
-              onClick={resetToDefault}
-              className="px-3 py-1.5 rounded-lg bg-rose-900/60 border border-rose-800 hover:bg-rose-800 text-rose-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset Defaults
-            </button>
-            <button
               onClick={handleSave}
-              className="px-4 py-1.5 rounded-lg bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer"
             >
               <Save className="w-4 h-4" /> Save Changes
             </button>
@@ -169,19 +156,19 @@ export default function AdminPage() {
 
       {/* Success Toast Notification */}
       {showSuccessToast && (
-        <div className="fixed bottom-6 right-6 bg-[#059669] text-white px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 font-bold text-sm animate-bounce">
-          <CheckCircle2 className="w-5 h-5" /> All Content Changes Saved Successfully!
+        <div className="fixed bottom-6 right-4 left-4 sm:left-auto sm:right-6 bg-[#059669] text-white px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center justify-center gap-2 font-bold text-xs sm:text-sm animate-bounce">
+          <CheckCircle2 className="w-5 h-5 shrink-0" /> All Content Changes Saved Successfully!
         </div>
       )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8">
         
-        {/* Navigation Tabs */}
-        <div className="flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none">
+        {/* Mobile Horizontal Scrollable Tabs */}
+        <div className="flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
           <button
             onClick={() => setActiveTab('branch')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+            className={`whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'branch'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
@@ -191,17 +178,17 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('notices')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+            className={`whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'notices'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
             }`}
           >
-            <Bell className="w-4 h-4" /> Notices & Announcements ({formData.notices.length})
+            <Bell className="w-4 h-4" /> Notices ({formData.notices.length})
           </button>
           <button
             onClick={() => setActiveTab('schemes')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+            className={`whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'schemes'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
@@ -211,31 +198,31 @@ export default function AdminPage() {
           </button>
           <button
             onClick={() => setActiveTab('sales')}
-            className={`px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer ${
+            className={`whitespace-nowrap px-3.5 sm:px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shrink-0 ${
               activeTab === 'sales'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
             }`}
           >
-            <Users className="w-4 h-4" /> Sales Representatives ({formData.salesTeam.length})
+            <Users className="w-4 h-4" /> Sales Reps ({formData.salesTeam.length})
           </button>
         </div>
 
         {/* Tab 1: Branch Info */}
         {activeTab === 'branch' && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs">
-            <h2 className="text-xl font-black text-slate-900 border-b border-slate-100 pb-3">
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-8 space-y-6 shadow-xs">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 border-b border-slate-100 pb-3">
               Branch Manager & Contact Details
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Branch Manager Name</label>
                 <input
                   type="text"
                   value={formData.branchInfo.managerName}
                   onChange={(e) => handleBranchChange('managerName', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -245,7 +232,7 @@ export default function AdminPage() {
                   type="text"
                   value={formData.branchInfo.managerTitle}
                   onChange={(e) => handleBranchChange('managerTitle', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -255,7 +242,7 @@ export default function AdminPage() {
                   type="text"
                   value={formData.branchInfo.phone}
                   onChange={(e) => handleBranchChange('phone', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -265,37 +252,37 @@ export default function AdminPage() {
                   type="email"
                   value={formData.branchInfo.email}
                   onChange={(e) => handleBranchChange('email', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Branch Warehouse Address</label>
                 <input
                   type="text"
                   value={formData.branchInfo.address}
                   onChange={(e) => handleBranchChange('address', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Branch Operating Hours</label>
                 <input
                   type="text"
                   value={formData.branchInfo.operatingHours}
                   onChange={(e) => handleBranchChange('operatingHours', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">Hero Image Path / URL</label>
                 <input
                   type="text"
                   value={formData.branchInfo.heroImage}
                   onChange={(e) => handleBranchChange('heroImage', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -304,25 +291,25 @@ export default function AdminPage() {
 
         {/* Tab 2: Notices */}
         {activeTab === 'notices' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
-              <h2 className="text-lg font-black text-slate-900">Manage Branch Notices</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-row items-center justify-between bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
+              <h2 className="text-base sm:text-lg font-black text-slate-900">Branch Notices</h2>
               <button
                 onClick={handleAddNotice}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Notice
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {formData.notices.map((notice, index) => (
-                <div key={notice.id} className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-xs relative">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div key={notice.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3.5 shadow-xs relative">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-xs font-bold text-slate-400">Notice #{index + 1}</span>
                     <button
                       onClick={() => handleDeleteNotice(notice.id)}
-                      className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-50 cursor-pointer"
+                      className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
                       title="Delete Notice"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -345,7 +332,7 @@ export default function AdminPage() {
                       type="text"
                       value={notice.title}
                       onChange={(e) => handleNoticeChange(notice.id, 'title', e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-extrabold"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-extrabold"
                     />
                   </div>
 
@@ -366,25 +353,25 @@ export default function AdminPage() {
 
         {/* Tab 3: Schemes & Articles */}
         {activeTab === 'schemes' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
-              <h2 className="text-lg font-black text-slate-900">Manage Schemes & Articles</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-row items-center justify-between bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
+              <h2 className="text-base sm:text-lg font-black text-slate-900">Schemes & Articles</h2>
               <button
                 onClick={handleAddScheme}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
               >
-                <Plus className="w-4 h-4" /> Add Product Scheme
+                <Plus className="w-4 h-4" /> Add Scheme
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {formData.schemes.map((scheme, index) => (
-                <div key={scheme.id} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs relative">
+                <div key={scheme.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs relative">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-xs font-bold text-slate-400">Scheme #{index + 1}</span>
                     <button
                       onClick={() => handleDeleteScheme(scheme.id)}
-                      className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-50 cursor-pointer"
+                      className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
                       title="Delete Scheme"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -397,7 +384,7 @@ export default function AdminPage() {
                       type="text"
                       value={scheme.name}
                       onChange={(e) => handleSchemeChange(scheme.id, 'name', e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-black"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-black"
                     />
                   </div>
 
@@ -439,25 +426,25 @@ export default function AdminPage() {
 
         {/* Tab 4: Sales Team */}
         {activeTab === 'sales' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
-              <h2 className="text-lg font-black text-slate-900">Manage Sales Representatives</h2>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-row items-center justify-between bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200">
+              <h2 className="text-base sm:text-lg font-black text-slate-900">Sales Representatives</h2>
               <button
                 onClick={handleAddSales}
-                className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
               >
                 <Plus className="w-4 h-4" /> Add Representative
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {formData.salesTeam.map((sales, index) => (
-                <div key={sales.id} className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs relative">
+                <div key={sales.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs relative">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                     <span className="text-xs font-bold text-slate-400">Sales Rep #{index + 1}</span>
                     <button
                       onClick={() => handleDeleteSales(sales.id)}
-                      className="text-rose-600 hover:text-rose-800 p-1 rounded-lg hover:bg-rose-50 cursor-pointer"
+                      className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
                       title="Delete Representative"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -470,7 +457,7 @@ export default function AdminPage() {
                       type="text"
                       value={sales.name}
                       onChange={(e) => handleSalesChange(sales.id, 'name', e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-bold"
                     />
                   </div>
 
