@@ -19,13 +19,15 @@ interface ContentContextType {
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 /**
- * Safely saves data to localStorage catching QuotaExceededError cleanly.
+ * Safely saves data to browser localStorage.
+ * Handles QuotaExceededError gracefully when uncompressed image Data URLs exceed browser localStorage limits.
  */
 function safeSaveToLocalStorage(key: string, data: SiteContent) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
-  } catch (e) {
-    console.warn('localStorage quota exceeded. Local cache skipped, data is saved in Cloud Firestore.');
+  } catch (_quotaError) {
+    // QuotaExceededError: Browser limit reached for localStorage (5 MB max).
+    // Data is safely saved & synced via Cloud Firestore real-time database.
   }
 }
 
@@ -34,14 +36,14 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
 
   useEffect(() => {
-    // 1. First, load fast initial cache from localStorage
+    // 1. Load initial cache from localStorage
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         setContent(JSON.parse(saved));
       }
-    } catch (e) {
-      console.warn('Failed to load site content from localStorage:', e);
+    } catch (_e) {
+      // Ignore cache load errors
     }
 
     // 2. Subscribe to real-time Cloud Firestore updates
