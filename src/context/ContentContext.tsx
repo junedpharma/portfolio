@@ -19,15 +19,37 @@ interface ContentContextType {
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 /**
- * Safely saves data to browser localStorage.
- * Handles QuotaExceededError gracefully when uncompressed image Data URLs exceed browser localStorage limits.
+ * Strips heavy base64 Data URLs (images & PDFs) from content before caching in localStorage.
+ * Ensures localStorage uses only ~5 KB of pure text JSON, preventing QuotaExceededError completely!
+ */
+function stripMediaFromContent(data: SiteContent): SiteContent {
+  return {
+    ...data,
+    branchInfo: {
+      ...data.branchInfo,
+      heroImage: data.branchInfo.heroImage?.startsWith('data:') ? '' : data.branchInfo.heroImage
+    },
+    notices: data.notices.map((notice) => ({
+      ...notice,
+      pdfUrl: notice.pdfUrl?.startsWith('data:') ? '' : notice.pdfUrl
+    })),
+    schemes: data.schemes.map((scheme) => ({
+      ...scheme,
+      articleImage: scheme.articleImage?.startsWith('data:') ? '' : scheme.articleImage
+    }))
+  };
+}
+
+/**
+ * Safely caches text-only site content to localStorage (~5 KB).
+ * Omits base64 images/PDFs so localStorage never exceeds its quota.
  */
 function safeSaveToLocalStorage(key: string, data: SiteContent) {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (_quotaError) {
-    // QuotaExceededError: Browser limit reached for localStorage (5 MB max).
-    // Data is safely saved & synced via Cloud Firestore real-time database.
+    const textOnlyContent = stripMediaFromContent(data);
+    localStorage.setItem(key, JSON.stringify(textOnlyContent));
+  } catch (e) {
+    console.warn('localStorage write skipped:', e);
   }
 }
 
@@ -36,7 +58,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
 
   useEffect(() => {
-    // 1. Load initial cache from localStorage
+    // 1. Fast initial text load from localStorage
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
@@ -46,7 +68,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // Ignore cache load errors
     }
 
-    // 2. Subscribe to real-time Cloud Firestore updates
+    // 2. Subscribe to real-time Cloud Firestore updates (loads full images & PDFs)
     setIsFirestoreSyncing(true);
     const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
     
@@ -77,15 +99,15 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateContent = async (newContent: SiteContent) => {
     setContent(newContent);
     
-    // Save to localStorage safely
+    // Save text-only version to localStorage
     safeSaveToLocalStorage(LOCAL_STORAGE_KEY, newContent);
 
-    // Save to Cloud Firestore
+    // Save full document (with images & PDFs) to Cloud Firestore
     try {
       const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
       await setDoc(contentDocRef, newContent);
     } catch (error) {
-      console.warn('Firestore setDoc failed/skipped (local cache updated):', error);
+      console.warn('Firestore setDoc failed/skipped:', error);
     }
   };
 
