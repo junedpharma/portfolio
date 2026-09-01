@@ -17,6 +17,48 @@ interface ContentContextType {
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
+/**
+ * Sanitizes object to ensure no `undefined` values exist in arrays.
+ * Cloud Firestore throws "Property array contains an invalid nested entity" if `undefined` is present in array objects.
+ */
+function sanitizeContentForFirestore(data: SiteContent): SiteContent {
+  return {
+    branchInfo: {
+      managerName: data.branchInfo.managerName || '',
+      managerTitle: data.branchInfo.managerTitle || '',
+      phone: data.branchInfo.phone || '',
+      email: data.branchInfo.email || '',
+      address: data.branchInfo.address || '',
+      operatingHours: data.branchInfo.operatingHours || '',
+      heroImage: data.branchInfo.heroImage || ''
+    },
+    notices: (data.notices || []).map((notice) => ({
+      id: notice.id || `notice-${Date.now()}`,
+      type: notice.type || 'general',
+      badgeText: notice.badgeText || '',
+      title: notice.title || '',
+      description: notice.description || '',
+      pdfUrl: notice.pdfUrl || '',
+      pdfName: notice.pdfName || ''
+    })),
+    schemes: (data.schemes || []).map((scheme) => ({
+      id: scheme.id || `scheme-${Date.now()}`,
+      name: scheme.name || '',
+      minPurchaseQty: scheme.minPurchaseQty || 0,
+      awardedArticle: scheme.awardedArticle || '',
+      articleImage: scheme.articleImage || ''
+    })),
+    salesTeam: (data.salesTeam || []).map((sales) => ({
+      id: sales.id || `sales-${Date.now()}`,
+      name: sales.name || '',
+      role: sales.role || '',
+      territory: sales.territory || '',
+      phone: sales.phone || '',
+      operatorNumber: sales.operatorNumber || ''
+    }))
+  };
+}
+
 export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(INITIAL_SITE_CONTENT);
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(true);
@@ -32,7 +74,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (docSnap.exists()) {
           setContent(docSnap.data() as SiteContent);
         } else {
-          setDoc(contentDocRef, INITIAL_SITE_CONTENT).catch((err) => {
+          const sanitizedInitial = sanitizeContentForFirestore(INITIAL_SITE_CONTENT);
+          setDoc(contentDocRef, sanitizedInitial).catch((err) => {
             console.warn('Firestore initial document write error:', err);
           });
         }
@@ -47,15 +90,17 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, []);
 
   const updateContent = async (newContent: SiteContent) => {
-    setContent(newContent);
+    const sanitizedData = sanitizeContentForFirestore(newContent);
+    setContent(sanitizedData);
     const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
-    await setDoc(contentDocRef, newContent);
+    await setDoc(contentDocRef, sanitizedData);
   };
 
   const resetToDefault = async () => {
-    setContent(INITIAL_SITE_CONTENT);
+    const sanitizedInitial = sanitizeContentForFirestore(INITIAL_SITE_CONTENT);
+    setContent(sanitizedInitial);
     const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
-    await setDoc(contentDocRef, INITIAL_SITE_CONTENT);
+    await setDoc(contentDocRef, sanitizedInitial);
   };
 
   return (

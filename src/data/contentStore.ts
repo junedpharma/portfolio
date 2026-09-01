@@ -58,14 +58,18 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
       type: "holiday",
       badgeText: "Holiday Closure",
       title: "Branch Closure on Rakshabandhan",
-      description: "ATC Pharma branch office will remain closed on Friday, 28th August 2026 on account of the festival of Rakshabandhan. Regular branch billing and dispatch operations will resume on Saturday, 29th August 2026."
+      description: "ATC Pharma branch office will remain closed on Friday, 28th August 2026 on account of the festival of Rakshabandhan. Regular branch billing and dispatch operations will resume on Saturday, 29th August 2026.",
+      pdfUrl: "",
+      pdfName: ""
     },
     {
       id: "notice-2",
       type: "stock",
       badgeText: "New Stock Arrival",
       title: "Fresh Antibiotic Stock",
-      description: "Fresh 2026 manufacturing batches for ATC-CEF 200mg & ATC-CLAV 625mg have arrived at the branch warehouse. Complete technical compositions and scheme details are updated below."
+      description: "Fresh 2026 manufacturing batches for ATC-CEF 200mg & ATC-CLAV 625mg have arrived at the branch warehouse. Complete technical compositions and scheme details are updated below.",
+      pdfUrl: "",
+      pdfName: ""
     }
   ],
   schemes: [
