@@ -9,15 +9,16 @@ export const Hero: React.FC = () => {
   const { heroImage, managerName, managerTitle } = content.branchInfo;
 
   return (
-    <section id="hero" className="relative w-full bg-slate-950 text-white min-h-[calc(100vh-5rem)] flex items-center justify-center overflow-hidden">
-      {/* Hero Image Container */}
-      <div className="relative w-full h-[calc(100vh-5rem)] flex items-center justify-center p-2 sm:p-0">
+    <section id="hero" className="relative w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-6 sm:pb-12 text-center">
+      {/* 100% Natural Aspect Ratio Image Container — No Black Bars */}
+      <div className="relative inline-block w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-2xl bg-white">
         <Image
           src={heroImage || "/juned-patel.jpg"}
           alt={`${managerName} — ${managerTitle}`}
-          fill
-          sizes="100vw"
-          className="object-contain sm:object-cover object-center sm:animate-slow-zoom"
+          width={900}
+          height={1200}
+          sizes="(max-width: 768px) 100vw, 900px"
+          className="w-full h-auto block object-cover animate-slow-zoom"
           priority
         />
       </div>
