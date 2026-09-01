@@ -155,7 +155,9 @@ export default function AdminPage() {
       type: 'general',
       badgeText: 'Update Notice',
       title: 'New Branch Announcement',
-      description: 'Enter announcement details here...'
+      description: 'Enter announcement details here...',
+      pdfUrl: '',
+      pdfName: ''
     };
     setFormData((prev) => ({
       ...prev,
