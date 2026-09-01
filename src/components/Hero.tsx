@@ -13,7 +13,7 @@ export const Hero: React.FC = () => {
       {/* 100% Natural Aspect Ratio Image Container — No Black Bars */}
       <div className="relative inline-block w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-2xl bg-white">
         <Image
-          src={heroImage || "/juned-patel.jpg"}
+          src={heroImage}
           alt={`${managerName} — ${managerTitle}`}
           width={900}
           height={1200}
