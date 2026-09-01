@@ -1,36 +1,47 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { SiteContent, INITIAL_SITE_CONTENT } from '@/data/contentStore';
+import { SiteContent } from '@/data/contentStore';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 const FIRESTORE_COLLECTION = 'portfolio';
 const FIRESTORE_DOC_ID = 'siteContent';
 
+const EMPTY_SITE_CONTENT: SiteContent = {
+  branchInfo: {
+    managerName: '',
+    managerTitle: '',
+    phone: '',
+    email: '',
+    address: '',
+    operatingHours: '',
+    heroImage: ''
+  },
+  notices: [],
+  schemes: [],
+  salesTeam: []
+};
+
 interface ContentContextType {
   content: SiteContent;
   updateContent: (newContent: SiteContent) => Promise<void>;
-  resetToDefault: () => Promise<void>;
   isFirestoreSyncing: boolean;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
-/**
- * Sanitizes object to ensure no `undefined` values exist in arrays.
- * Cloud Firestore throws "Property array contains an invalid nested entity" if `undefined` is present in array objects.
- */
 function sanitizeContentForFirestore(data: SiteContent): SiteContent {
+  if (!data) return EMPTY_SITE_CONTENT;
   return {
     branchInfo: {
-      managerName: data.branchInfo.managerName || '',
-      managerTitle: data.branchInfo.managerTitle || '',
-      phone: data.branchInfo.phone || '',
-      email: data.branchInfo.email || '',
-      address: data.branchInfo.address || '',
-      operatingHours: data.branchInfo.operatingHours || '',
-      heroImage: data.branchInfo.heroImage || ''
+      managerName: data.branchInfo?.managerName || '',
+      managerTitle: data.branchInfo?.managerTitle || '',
+      phone: data.branchInfo?.phone || '',
+      email: data.branchInfo?.email || '',
+      address: data.branchInfo?.address || '',
+      operatingHours: data.branchInfo?.operatingHours || '',
+      heroImage: data.branchInfo?.heroImage || ''
     },
     notices: (data.notices || []).map((notice) => ({
       id: notice.id || `notice-${Date.now()}`,
@@ -60,7 +71,7 @@ function sanitizeContentForFirestore(data: SiteContent): SiteContent {
 }
 
 export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [content, setContent] = useState<SiteContent>(INITIAL_SITE_CONTENT);
+  const [content, setContent] = useState<SiteContent>(EMPTY_SITE_CONTENT);
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(true);
 
   useEffect(() => {
@@ -72,12 +83,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       (docSnap) => {
         setIsFirestoreSyncing(false);
         if (docSnap.exists()) {
-          setContent(docSnap.data() as SiteContent);
-        } else {
-          const sanitizedInitial = sanitizeContentForFirestore(INITIAL_SITE_CONTENT);
-          setDoc(contentDocRef, sanitizedInitial).catch((err) => {
-            console.warn('Firestore initial document write error:', err);
-          });
+          setContent(sanitizeContentForFirestore(docSnap.data() as SiteContent));
         }
       },
       (error) => {
@@ -96,15 +102,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     await setDoc(contentDocRef, sanitizedData);
   };
 
-  const resetToDefault = async () => {
-    const sanitizedInitial = sanitizeContentForFirestore(INITIAL_SITE_CONTENT);
-    setContent(sanitizedInitial);
-    const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
-    await setDoc(contentDocRef, sanitizedInitial);
-  };
-
   return (
-    <ContentContext.Provider value={{ content, updateContent, resetToDefault, isFirestoreSyncing }}>
+    <ContentContext.Provider value={{ content, updateContent, isFirestoreSyncing }}>
       {children}
     </ContentContext.Provider>
   );
