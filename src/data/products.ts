@@ -12,7 +12,7 @@ export const PRODUCTS_DATA: Product[] = [
     name: "Fungi 6 Tube",
     minPurchaseQty: 10,
     awardedArticle: "1 Cold Inhaler Jar Free",
-    articleImage: "/inhaler-jar.jpg"
+    articleImage: undefined
   },
   {
     id: "atc-clav-625",
