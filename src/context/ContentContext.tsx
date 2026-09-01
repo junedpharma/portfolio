@@ -18,6 +18,17 @@ interface ContentContextType {
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
+/**
+ * Safely saves data to localStorage catching QuotaExceededError cleanly.
+ */
+function safeSaveToLocalStorage(key: string, data: SiteContent) {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.warn('localStorage quota exceeded. Local cache skipped, data is saved in Cloud Firestore.');
+  }
+}
+
 export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(INITIAL_SITE_CONTENT);
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(false);
@@ -30,7 +41,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setContent(JSON.parse(saved));
       }
     } catch (e) {
-      console.error('Failed to load site content from localStorage:', e);
+      console.warn('Failed to load site content from localStorage:', e);
     }
 
     // 2. Subscribe to real-time Cloud Firestore updates
@@ -44,11 +55,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (docSnap.exists()) {
           const remoteData = docSnap.data() as SiteContent;
           setContent(remoteData);
-          try {
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(remoteData));
-          } catch (err) {
-            console.error('Failed to cache Firestore data in localStorage:', err);
-          }
+          safeSaveToLocalStorage(LOCAL_STORAGE_KEY, remoteData);
         } else {
           // Document doesn't exist in Firestore yet, seed with initial content
           setDoc(contentDocRef, INITIAL_SITE_CONTENT).catch((err) => {
@@ -68,12 +75,8 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateContent = async (newContent: SiteContent) => {
     setContent(newContent);
     
-    // Save to localStorage immediately for instant feedback
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newContent));
-    } catch (e) {
-      console.error('Failed to save site content to localStorage:', e);
-    }
+    // Save to localStorage safely
+    safeSaveToLocalStorage(LOCAL_STORAGE_KEY, newContent);
 
     // Save to Cloud Firestore
     try {
