@@ -132,8 +132,9 @@ export default function AdminPage() {
               : notice
           )
         }));
-      } catch (err) {
+      } catch (err: any) {
         console.error('PDF upload failed:', err);
+        alert(err.message || 'PDF upload failed. Please try a smaller PDF file.');
       } finally {
         setIsUploading(false);
       }
