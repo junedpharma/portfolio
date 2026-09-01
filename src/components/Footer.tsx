@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Tablet, Phone, Mail, MapPin, Clock } from 'lucide-react';
+import { Pill, Phone, Mail, MapPin, Clock } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
 
 export const Footer: React.FC = () => {
@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#059669] to-[#0d9488] flex items-center justify-center text-white font-bold shadow-md">
-                <Tablet className="w-5 h-5" />
+                <Pill className="w-5 h-5 rotate-45" />
               </div>
               <div>
                 <h3 className="text-base font-extrabold text-white tracking-wide">{managerName}</h3>

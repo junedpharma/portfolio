@@ -12,7 +12,7 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Lock, Mail, KeyRound, Tablet } from 'lucide-react';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Lock, Mail, KeyRound, Pill } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Tablet, Menu, X } from 'lucide-react';
+import { Pill, Menu, X } from 'lucide-react';
 import { useContent } from '@/context/ContentContext';
 
 export const Header: React.FC = () => {
@@ -23,7 +23,7 @@ export const Header: React.FC = () => {
         {/* Brand Logo */}
         <a href="#hero" onClick={closeMobileMenu} className="flex items-center gap-3 group">
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-[#059669] to-[#0d9488] flex items-center justify-center text-white font-bold shadow-lg shadow-emerald-600/20 group-hover:scale-105 transition-transform">
-            <Tablet className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Pill className="w-5 h-5 sm:w-6 sm:h-6 rotate-45" />
           </div>
           <div>
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 leading-tight">
