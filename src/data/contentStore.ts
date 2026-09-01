@@ -22,7 +22,7 @@ export interface SalesRep {
   role: string;
   territory: string;
   phone: string;
-  email: string;
+  operatorNumber: string;
 }
 
 export interface BranchInfo {
@@ -119,7 +119,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
       role: "Senior Area Sales Executive",
       territory: "Central Market & Station Road Beat",
       phone: "+91 98230 11223",
-      email: "ramesh.sharma@atcpharma.com"
+      operatorNumber: ""
     },
     {
       id: "sales-2",
@@ -127,7 +127,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
       role: "Territory Sales Representative",
       territory: "Hospital Zone & Civil Line Chemists",
       phone: "+91 98901 22334",
-      email: "aman.khan@atcpharma.com"
+      operatorNumber: ""
     },
     {
       id: "sales-3",
@@ -135,7 +135,7 @@ export const INITIAL_SITE_CONTENT: SiteContent = {
       role: "Field Representative & Institutional Sales",
       territory: "Suburban Wholesale Markets & Outer Beats",
       phone: "+91 97654 33445",
-      email: "vikas.patel@atcpharma.com"
+      operatorNumber: ""
     }
   ]
 };

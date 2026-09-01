@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Phone, Mail, MapPin, UserCheck, MessageSquare } from 'lucide-react';
+import { Phone, MapPin, UserCheck, MessageSquare, PhoneCall } from 'lucide-react';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { useContent } from '@/context/ContentContext';
 
@@ -58,12 +58,17 @@ export const SalesContacts: React.FC = () => {
                       </a>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
-                      <Mail className="w-4 h-4 text-[#059669] shrink-0" />
-                      <a href={`mailto:${person.email}`} className="text-slate-600 hover:text-[#059669] transition-colors">
-                        {person.email}
-                      </a>
-                    </div>
+                    {person.operatorNumber && (
+                      <div className="flex items-center gap-2.5">
+                        <PhoneCall className="w-4 h-4 text-[#059669] shrink-0" />
+                        <div>
+                          <strong className="text-slate-900 inline-block mr-1">Operator:</strong>
+                          <a href={`tel:${person.operatorNumber}`} className="text-slate-700 font-semibold hover:text-[#059669] transition-colors">
+                            {person.operatorNumber}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
