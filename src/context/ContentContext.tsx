@@ -20,7 +20,7 @@ const FIRESTORE_DOC_ID = 'siteContent';
 
 export const DEFAULT_SITE_CONTENT: SiteContent = {
   branchInfo: {
-    managerName: 'Juned Patel',
+    managerName: 'Juned',
     managerTitle: 'Branch Manager — ATC Division',
     phone: '+91 98251 23456',
     email: 'pateljuned35@gmail.com',
