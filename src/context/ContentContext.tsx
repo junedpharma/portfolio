@@ -18,14 +18,14 @@ import {
 const FIRESTORE_COLLECTION = 'portfolio';
 const FIRESTORE_DOC_ID = 'siteContent';
 
-const EMPTY_SITE_CONTENT: SiteContent = {
+export const DEFAULT_SITE_CONTENT: SiteContent = {
   branchInfo: {
-    managerName: '',
-    managerTitle: '',
-    phone: '',
-    email: '',
-    address: '',
-    operatingHours: '',
+    managerName: 'Juned',
+    managerTitle: 'Branch Manager — ATC Division',
+    phone: '+91 98251 23456',
+    email: 'pateljuned35@gmail.com',
+    address: 'ATC Pharma Division Warehouse, Plot 42, GIDC Industrial Estate, Silvassa, Dadra & Nagar Haveli - 396230',
+    operatingHours: 'Monday – Saturday: 9:00 AM – 7:30 PM (Sunday Closed)',
     heroImage: '',
     heroImageName: ''
   },
@@ -42,8 +42,24 @@ interface ContentContextType {
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
+function isEmptySiteContent(data: SiteContent): boolean {
+  if (!data) return true;
+  const b = data.branchInfo;
+  const hasBranchData = Boolean(
+    b?.managerName?.trim() ||
+    b?.phone?.trim() ||
+    b?.email?.trim() ||
+    b?.address?.trim()
+  );
+  const hasNotices = Array.isArray(data.notices) && data.notices.length > 0;
+  const hasSchemes = Array.isArray(data.schemes) && data.schemes.length > 0;
+  const hasSales = Array.isArray(data.salesTeam) && data.salesTeam.length > 0;
+
+  return !hasBranchData && !hasNotices && !hasSchemes && !hasSales;
+}
+
 function sanitizeContentForFirestore(data: SiteContent): SiteContent {
-  if (!data) return EMPTY_SITE_CONTENT;
+  if (!data) return DEFAULT_SITE_CONTENT;
   return {
     branchInfo: {
       managerName: data.branchInfo?.managerName || '',
@@ -84,7 +100,7 @@ function sanitizeContentForFirestore(data: SiteContent): SiteContent {
 }
 
 export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [content, setContent] = useState<SiteContent>(EMPTY_SITE_CONTENT);
+  const [content, setContent] = useState<SiteContent>(DEFAULT_SITE_CONTENT);
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(true);
 
   useEffect(() => {
@@ -96,7 +112,10 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       (docSnap) => {
         setIsFirestoreSyncing(false);
         if (docSnap.exists()) {
-          setContent(sanitizeContentForFirestore(docSnap.data() as SiteContent));
+          const fetchedData = sanitizeContentForFirestore(docSnap.data() as SiteContent);
+          if (!isEmptySiteContent(fetchedData)) {
+            setContent(fetchedData);
+          }
         }
       },
       (error) => {
@@ -110,6 +129,13 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const updateContent = async (newContent: SiteContent) => {
     const sanitizedData = sanitizeContentForFirestore(newContent);
+
+    // Safeguard: Prevent writing empty content to Cloud Firestore
+    if (isEmptySiteContent(sanitizedData)) {
+      console.error('Blocked attempt to save empty site content to Cloud Firestore.');
+      throw new Error('Cannot save empty site content to Firestore.');
+    }
+
     setContent(sanitizedData);
 
     // 1. Save main document
