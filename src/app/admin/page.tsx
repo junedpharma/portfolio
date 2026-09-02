@@ -7,12 +7,11 @@ import { uploadFileToFirebaseStorage } from '@/lib/storage';
 import { auth } from '@/lib/firebase';
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Lock, Mail, KeyRound, Pill } from 'lucide-react';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Mail, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
@@ -39,10 +38,12 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, []);
 
-  // Sync content state
-  useEffect(() => {
+  // Sync content state when context content updates
+  const [prevContent, setPrevContent] = useState(content);
+  if (content !== prevContent) {
+    setPrevContent(content);
     setFormData(content);
-  }, [content]);
+  }
 
   // Email / Password Auth Handler
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -52,16 +53,17 @@ export default function AdminPage() {
 
     try {
       await signInWithEmailAndPassword(auth, authEmail, authPassword);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Authentication Error:', err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      const authErr = err as { code?: string; message?: string };
+      if (authErr.code === 'auth/invalid-credential' || authErr.code === 'auth/user-not-found' || authErr.code === 'auth/wrong-password') {
         setAuthError('Invalid email or password. Please check your credentials.');
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (authErr.code === 'auth/email-already-in-use') {
         setAuthError('This email is already registered. Try logging in.');
-      } else if (err.code === 'auth/weak-password') {
+      } else if (authErr.code === 'auth/weak-password') {
         setAuthError('Password should be at least 6 characters long.');
       } else {
-        setAuthError(err.message || 'Failed to authenticate.');
+        setAuthError(authErr.message || 'Failed to authenticate.');
       }
     } finally {
       setIsSubmittingAuth(false);
@@ -98,7 +100,7 @@ export default function AdminPage() {
     if (file) {
       setIsUploading(true);
       try {
-        const fileUrl = await uploadFileToFirebaseStorage(file, 'hero-images');
+        const fileUrl = await uploadFileToFirebaseStorage(file);
         handleBranchChange('heroImage', fileUrl);
       } catch (err) {
         console.error('Hero image upload failed:', err);
@@ -123,7 +125,7 @@ export default function AdminPage() {
     if (file) {
       setIsUploading(true);
       try {
-        const fileUrl = await uploadFileToFirebaseStorage(file, 'notice-pdfs');
+        const fileUrl = await uploadFileToFirebaseStorage(file);
         setFormData((prev) => ({
           ...prev,
           notices: prev.notices.map((notice) =>
@@ -132,9 +134,10 @@ export default function AdminPage() {
               : notice
           )
         }));
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('PDF upload failed:', err);
-        alert(err.message || 'PDF upload failed. Please try a smaller PDF file.');
+        const uploadErr = err as { message?: string };
+        alert(uploadErr.message || 'PDF upload failed. Please try a smaller PDF file.');
       } finally {
         setIsUploading(false);
       }
@@ -188,7 +191,7 @@ export default function AdminPage() {
     if (file) {
       setIsUploading(true);
       try {
-        const fileUrl = await uploadFileToFirebaseStorage(file, 'article-images');
+        const fileUrl = await uploadFileToFirebaseStorage(file);
         handleSchemeChange(id, 'articleImage', fileUrl);
       } catch (err) {
         console.error('Article image upload failed:', err);
