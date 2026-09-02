@@ -9,16 +9,16 @@ export const Hero: React.FC = () => {
   const { heroImage, managerName, managerTitle } = content.branchInfo;
 
   return (
-    <section id="hero" className="relative w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-8 sm:pt-6 sm:pb-12 text-center">
-      {/* 100% Natural Aspect Ratio Image Container — No Black Bars */}
-      <div className="relative inline-block w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-2xl bg-white">
+    <section id="hero" className="relative w-full max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 pb-6 sm:pt-4 sm:pb-8 text-center flex justify-center items-center">
+      {/* Desktop view limited to 100vw and max 80vh height so it fits within screen view */}
+      <div className="relative inline-block w-full max-w-[100vw] max-h-[80vh] rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200 shadow-2xl bg-white flex justify-center items-center">
         <Image
           src={heroImage}
           alt={`${managerName} — ${managerTitle}`}
           width={900}
           height={1200}
-          sizes="(max-width: 768px) 100vw, 900px"
-          className="w-full h-auto block object-cover animate-slow-zoom"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 900px"
+          className="w-auto h-auto max-w-full max-h-[80vh] object-contain sm:object-cover animate-slow-zoom"
           priority
         />
       </div>
