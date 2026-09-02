@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 
 const GITHUB_REPO = 'junedpharma/portfolio';
 const GITHUB_BRANCH = 'main';
@@ -18,24 +16,14 @@ export async function POST(req: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const base64Content = buffer.toString('base64');
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const fileName = `${Date.now()}_${cleanName}`;
-    const relativeAssetPath = `/uploads/${folder}/${fileName}`;
-    const localPublicPath = path.join(process.cwd(), 'public', 'uploads', folder, fileName);
+    const githubFilePath = `public/uploads/${folder}/${fileName}`;
 
-    // 1. Write file directly to local public/ folder on disk
-    try {
-      const dirPath = path.dirname(localPublicPath);
-      await fs.promises.mkdir(dirPath, { recursive: true });
-      await fs.promises.writeFile(localPublicPath, buffer);
-    } catch (fsErr) {
-      console.warn('Local disk public folder write warning:', fsErr);
-    }
-
-    // 2. If GITHUB_TOKEN is available, commit file to public/ folder in GitHub repo for live deployment
+    // 1. If GITHUB_TOKEN is available, commit file directly to GitHub Repository
     if (GITHUB_TOKEN) {
-      const githubFilePath = `public/uploads/${folder}/${fileName}`;
       const githubUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${githubFilePath}`;
 
       const res = await fetch(githubUrl, {
@@ -46,20 +34,26 @@ export async function POST(req: NextRequest) {
           'User-Agent': 'NextJS-Portfolio-App'
         },
         body: JSON.stringify({
-          message: `Add asset ${fileName} to public folder`,
-          content: buffer.toString('base64'),
+          message: `Upload media file ${fileName} to public uploads via Admin Portal`,
+          content: base64Content,
           branch: GITHUB_BRANCH
         })
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        // Return instant GitHub Raw CDN URL
+        const rawCdnUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${githubFilePath}`;
+        return NextResponse.json({ success: true, url: rawCdnUrl });
+      } else {
         const errJson = await res.json();
         console.warn('GitHub API commit warning:', errJson);
       }
     }
 
-    // Return clean public asset path (e.g. /uploads/notice-pdfs/1788_file.pdf)
-    return NextResponse.json({ success: true, url: relativeAssetPath });
+    // 2. Fallback: Return Data URL if GITHUB_TOKEN is not set yet
+    const mimeType = file.type || 'application/pdf';
+    const dataUrl = `data:${mimeType};base64,${base64Content}`;
+    return NextResponse.json({ success: true, url: dataUrl });
 
   } catch (error: any) {
     console.error('API Upload error:', error);
