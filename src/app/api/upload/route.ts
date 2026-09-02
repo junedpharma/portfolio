@@ -34,10 +34,14 @@ export async function POST(req: NextRequest) {
     const githubFilePath = `public/uploads/${folder}/${fileName}`;
     const githubUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${githubFilePath}`;
 
+    const authHeader = token.startsWith('github_pat_') || token.startsWith('Bearer ')
+      ? (token.startsWith('Bearer ') ? token : `Bearer ${token}`)
+      : `token ${token}`;
+
     const res = await fetch(githubUrl, {
       method: 'PUT',
       headers: {
-        Authorization: `token ${token}`,
+        Authorization: authHeader,
         'Content-Type': 'application/json',
         'User-Agent': 'NextJS-Portfolio-App'
       },
@@ -52,7 +56,7 @@ export async function POST(req: NextRequest) {
       const errJson = await res.json();
       console.error('GitHub API Commit Error:', errJson);
       return NextResponse.json(
-        { error: errJson.message || 'GitHub API rejected file commit. Verify GITHUB_TOKEN repo permissions.' },
+        { error: errJson.message || 'GitHub API rejected file commit. Ensure token has Contents: Write permissions for junedpharma/portfolio.' },
         { status: res.status }
       );
     }
