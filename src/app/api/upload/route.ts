@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 const GITHUB_REPO = process.env.GITHUB_REPO || 'junedpharma/portfolio';
 const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'main';
@@ -16,16 +18,26 @@ export async function POST(req: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const base64Content = buffer.toString('base64');
 
     const cleanName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = `${folder}/${Date.now()}_${cleanName}`;
-    const filePath = `public/${filename}`;
+    const fileName = `${Date.now()}_${cleanName}`;
+    const relativeAssetPath = `/uploads/${folder}/${fileName}`;
+    const localPublicPath = path.join(process.cwd(), 'public', 'uploads', folder, fileName);
 
-    // If GITHUB_TOKEN is available, commit file directly to GitHub Repository
+    // 1. Write file directly to local public/ folder on disk
+    try {
+      const dirPath = path.dirname(localPublicPath);
+      await fs.promises.mkdir(dirPath, { recursive: true });
+      await fs.promises.writeFile(localPublicPath, buffer);
+    } catch (fsErr) {
+      console.warn('Local disk public folder write warning:', fsErr);
+    }
+
+    // 2. If GITHUB_TOKEN is available, commit file to public/ folder in GitHub repo for live deployment
     if (GITHUB_TOKEN) {
-      const githubUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
-      
+      const githubFilePath = `public/uploads/${folder}/${fileName}`;
+      const githubUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${githubFilePath}`;
+
       const res = await fetch(githubUrl, {
         method: 'PUT',
         headers: {
@@ -34,25 +46,20 @@ export async function POST(req: NextRequest) {
           'User-Agent': 'NextJS-Portfolio-App'
         },
         body: JSON.stringify({
-          message: `Upload media file ${filename} via Admin Portal`,
-          content: base64Content,
+          message: `Add asset ${fileName} to public folder`,
+          content: buffer.toString('base64'),
           branch: GITHUB_BRANCH
         })
       });
 
-      if (res.ok) {
-        const rawCdnUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${filePath}`;
-        return NextResponse.json({ success: true, url: rawCdnUrl });
-      } else {
+      if (!res.ok) {
         const errJson = await res.json();
         console.warn('GitHub API commit warning:', errJson);
       }
     }
 
-    // Fallback: If no GITHUB_TOKEN is set, return Data URL
-    const mimeType = file.type || 'application/octet-stream';
-    const dataUrl = `data:${mimeType};base64,${base64Content}`;
-    return NextResponse.json({ success: true, url: dataUrl });
+    // Return clean public asset path (e.g. /uploads/notice-pdfs/1788_file.pdf)
+    return NextResponse.json({ success: true, url: relativeAssetPath });
 
   } catch (error: any) {
     console.error('API Upload error:', error);
