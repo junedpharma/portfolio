@@ -14,6 +14,7 @@ export interface SchemeProduct {
   minPurchaseQty: number;
   awardedArticle: string;
   articleImage?: string;
+  articleImageName?: string;
 }
 
 export interface SalesRep {
@@ -33,6 +34,7 @@ export interface BranchInfo {
   address: string;
   operatingHours: string;
   heroImage: string;
+  heroImageName?: string;
 }
 
 export interface SiteContent {

@@ -45,6 +45,21 @@ export default function AdminPage() {
     setFormData(content);
   }
 
+  // Extract clean display file name from stored property or fallback URL
+  const getDisplayFileName = (storedName?: string, fallbackUrl?: string) => {
+    if (storedName && storedName.trim()) return storedName;
+    if (!fallbackUrl) return '';
+    try {
+      const parts = fallbackUrl.split('/');
+      const last = parts[parts.length - 1];
+      const clean = last.includes('?') ? last.split('?')[0] : last;
+      const decoded = decodeURIComponent(clean);
+      return decoded.replace(/^\d+_/, '');
+    } catch {
+      return 'Uploaded_File';
+    }
+  };
+
   // Email / Password Auth Handler
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,13 +116,36 @@ export default function AdminPage() {
       setIsUploading(true);
       try {
         const fileUrl = await uploadFileToFirebaseStorage(file);
-        handleBranchChange('heroImage', fileUrl);
-      } catch (err) {
+        setFormData((prev) => ({
+          ...prev,
+          branchInfo: {
+            ...prev.branchInfo,
+            heroImage: fileUrl,
+            heroImageName: file.name
+          }
+        }));
+      } catch (err: unknown) {
         console.error('Hero image upload failed:', err);
+        const uploadErr = err as { message?: string };
+        alert(uploadErr.message || 'Hero image upload failed.');
       } finally {
         setIsUploading(false);
+        e.target.value = '';
       }
     }
+  };
+
+  const handleRemoveHeroImage = () => {
+    const inputEl = document.getElementById('hero-image-input') as HTMLInputElement | null;
+    if (inputEl) inputEl.value = '';
+    setFormData((prev) => ({
+      ...prev,
+      branchInfo: {
+        ...prev.branchInfo,
+        heroImage: '',
+        heroImageName: ''
+      }
+    }));
   };
 
   // Notice Handlers
@@ -147,9 +185,7 @@ export default function AdminPage() {
 
   const handleRemoveNoticePDF = (id: string) => {
     const inputEl = document.getElementById(`pdf-input-${id}`) as HTMLInputElement | null;
-    if (inputEl) {
-      inputEl.value = '';
-    }
+    if (inputEl) inputEl.value = '';
     setFormData((prev) => ({
       ...prev,
       notices: prev.notices.map((notice) =>
@@ -197,13 +233,32 @@ export default function AdminPage() {
       setIsUploading(true);
       try {
         const fileUrl = await uploadFileToFirebaseStorage(file);
-        handleSchemeChange(id, 'articleImage', fileUrl);
-      } catch (err) {
+        setFormData((prev) => ({
+          ...prev,
+          schemes: prev.schemes.map((scheme) =>
+            scheme.id === id ? { ...scheme, articleImage: fileUrl, articleImageName: file.name } : scheme
+          )
+        }));
+      } catch (err: unknown) {
         console.error('Article image upload failed:', err);
+        const uploadErr = err as { message?: string };
+        alert(uploadErr.message || 'Article image upload failed.');
       } finally {
         setIsUploading(false);
+        e.target.value = '';
       }
     }
+  };
+
+  const handleRemoveArticleImage = (id: string) => {
+    const inputEl = document.getElementById(`scheme-img-input-${id}`) as HTMLInputElement | null;
+    if (inputEl) inputEl.value = '';
+    setFormData((prev) => ({
+      ...prev,
+      schemes: prev.schemes.map((scheme) =>
+        scheme.id === id ? { ...scheme, articleImage: '', articleImageName: '' } : scheme
+      )
+    }));
   };
 
   const handleAddScheme = () => {
@@ -212,7 +267,8 @@ export default function AdminPage() {
       name: 'New Product Formulation',
       minPurchaseQty: 10,
       awardedArticle: '1 Free Bonus Box',
-      articleImage: ''
+      articleImage: '',
+      articleImageName: ''
     };
     setFormData((prev) => ({
       ...prev,
@@ -227,7 +283,7 @@ export default function AdminPage() {
     }));
   };
 
-  // Sales Rep Handlers
+  // Sales Team Handlers
   const handleSalesChange = (id: string, field: keyof SalesRep, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -240,11 +296,11 @@ export default function AdminPage() {
   const handleAddSales = () => {
     const newSales: SalesRep = {
       id: `sales-${Date.now()}`,
-      name: '',
-      role: '',
-      territory: '',
-      phone: '',
-      operatorNumber: ''
+      name: 'New Representative',
+      role: 'Sales Representative',
+      territory: 'Silvassa Division',
+      phone: '+91 98765 43210',
+      operatorNumber: '+91 98765 43210'
     };
     setFormData((prev) => ({
       ...prev,
@@ -259,43 +315,37 @@ export default function AdminPage() {
     }));
   };
 
-  // Auth Loading View
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-4">
-        <div className="flex items-center gap-3 text-[#059669] font-bold text-sm bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <Loader2 className="w-6 h-6 animate-spin text-[#059669]" /> Verifying Admin Authentication...
-        </div>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
+        <Loader2 className="w-8 h-8 text-[#059669] animate-spin mb-4" />
+        <p className="text-sm font-semibold text-slate-400">Loading Portal...</p>
       </div>
     );
   }
 
-  // Unauthenticated Login View Matching Website Theme (White & Teal)
+  // If user is not authenticated, render Login Modal
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-
-          {/* Brand & Title */}
-          <div className="text-center space-y-2.5">
-            <div>
-              <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-                JUNED PATEL
-              </h1>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
+          <div className="text-center space-y-2">
+            <div className="w-12 h-12 bg-emerald-100 text-[#059669] rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <KeyRound className="w-6 h-6" />
             </div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900">Admin Control Portal</h1>
+            <p className="text-xs text-slate-500 font-medium">Enter your credentials to manage branch content</p>
           </div>
 
-          {/* Error Banner */}
           {authError && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-2.5 rounded-xl text-xs font-bold leading-relaxed">
+            <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold p-3.5 rounded-xl">
               {authError}
             </div>
           )}
 
-          {/* Simple Email & Password Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-[#059669]" /> Email Address
               </label>
               <input
@@ -303,13 +353,13 @@ export default function AdminPage() {
                 required
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                placeholder="Enter your email address"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:border-[#059669] focus:bg-white focus:outline-none transition-colors"
+                placeholder="pateljuned35@gmail.com"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 focus:border-[#059669] focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-extrabold text-slate-700 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
                 <KeyRound className="w-3.5 h-3.5 text-[#059669]" /> Password
               </label>
               <input
@@ -318,79 +368,81 @@ export default function AdminPage() {
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:border-[#059669] focus:bg-white focus:outline-none transition-colors"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-900 focus:border-[#059669] focus:outline-none"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmittingAuth}
-              className="w-full py-3 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-[#059669] to-[#0d9488] hover:from-[#047857] hover:to-[#0f766e] text-white font-black text-xs sm:text-sm shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmittingAuth ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Authenticating...
+                </>
               ) : (
-                'Sign In to Admin Panel'
+                'Sign In to Dashboard'
               )}
             </button>
           </form>
 
-          <div className="text-center">
-            <Link href="/" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center gap-1">
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Website Home
+          <div className="pt-2 text-center border-t border-slate-100">
+            <Link href="/" className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors inline-flex items-center gap-1">
+              <ArrowLeft className="w-3.5 h-3.5" /> Return to Website
             </Link>
           </div>
-
         </div>
       </div>
     );
   }
 
-  // Render Functions for Reusable Content Sections
+  const heroFileName = getDisplayFileName(formData.branchInfo.heroImageName, formData.branchInfo.heroImage);
+
   const renderBranchSection = () => (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-8 space-y-6 shadow-xs">
-      <h2 className="text-lg sm:text-xl font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-        <Building2 className="w-5 h-5 text-emerald-600" /> Branch Manager & Profile Photo
+    <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-4 shadow-xs">
+      <h2 className="text-base sm:text-lg font-black text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+        <Building2 className="w-5 h-5 text-[#059669]" /> Branch & Manager Information
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-slate-700 mb-1">Branch Manager Name</label>
           <input
             type="text"
             value={formData.branchInfo.managerName}
             onChange={(e) => handleBranchChange('managerName', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Branch Manager Designation Title</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1">Manager Designation / Title</label>
           <input
             type="text"
             value={formData.branchInfo.managerTitle}
             onChange={(e) => handleBranchChange('managerTitle', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Branch Phone Number</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1">Branch Direct Helpline</label>
           <input
             type="text"
             value={formData.branchInfo.phone}
             onChange={(e) => handleBranchChange('phone', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">Branch Email Address</label>
+          <label className="block text-xs font-bold text-slate-700 mb-1">Branch Official Email</label>
           <input
             type="email"
             value={formData.branchInfo.email}
             onChange={(e) => handleBranchChange('email', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
@@ -400,7 +452,7 @@ export default function AdminPage() {
             type="text"
             value={formData.branchInfo.address}
             onChange={(e) => handleBranchChange('address', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
@@ -410,23 +462,38 @@ export default function AdminPage() {
             type="text"
             value={formData.branchInfo.operatingHours}
             onChange={(e) => handleBranchChange('operatingHours', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-emerald-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold focus:border-[#059669] focus:outline-none"
           />
         </div>
 
-        {/* Hero Image File Picker */}
+        {/* Hero Image File Picker & File Name Display */}
         <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
           <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-            <ImageIcon className="w-4 h-4 text-[#059669]" /> Profile Image
+            <ImageIcon className="w-4 h-4 text-[#059669]" /> Profile Banner Image File
           </label>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <input
+              id="hero-image-input"
               type="file"
               accept="image/*"
               onChange={handleHeroImageUpload}
               className="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
             />
           </div>
+          {heroFileName && (
+            <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-emerald-900 mt-2">
+              <span className="truncate font-bold flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-emerald-600 shrink-0" /> {heroFileName}
+              </span>
+              <button
+                type="button"
+                onClick={handleRemoveHeroImage}
+                className="text-rose-700 font-bold hover:underline ml-2 cursor-pointer text-[11px] shrink-0"
+              >
+                Remove Image
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -439,6 +506,7 @@ export default function AdminPage() {
           <Bell className="w-5 h-5 text-amber-600" /> Branch Notices ({formData.notices.length})
         </h2>
         <button
+          type="button"
           onClick={handleAddNotice}
           className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
         >
@@ -447,77 +515,82 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        {formData.notices.map((notice, index) => (
-          <div key={notice.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3.5 shadow-xs relative">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-xs font-bold text-slate-400">Notice #{index + 1}</span>
-              <button
-                onClick={() => handleDeleteNotice(notice.id)}
-                className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
-                title="Delete Notice"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+        {formData.notices.map((notice, index) => {
+          const displayPdfName = getDisplayFileName(notice.pdfName, notice.pdfUrl);
+          return (
+            <div key={notice.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 space-y-3.5 shadow-xs relative">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <span className="text-xs font-bold text-slate-400">Notice #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteNotice(notice.id)}
+                  className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
+                  title="Delete Notice"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Badge Text</label>
-              <input
-                type="text"
-                value={notice.badgeText}
-                onChange={(e) => handleNoticeChange(notice.id, 'badgeText', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Badge Text</label>
+                <input
+                  type="text"
+                  value={notice.badgeText}
+                  onChange={(e) => handleNoticeChange(notice.id, 'badgeText', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Notice Title</label>
-              <input
-                type="text"
-                value={notice.title}
-                onChange={(e) => handleNoticeChange(notice.id, 'title', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-extrabold"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Notice Title</label>
+                <input
+                  type="text"
+                  value={notice.title}
+                  onChange={(e) => handleNoticeChange(notice.id, 'title', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-extrabold"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Notice Content / Description</label>
-              <textarea
-                rows={4}
-                value={notice.description}
-                onChange={(e) => handleNoticeChange(notice.id, 'description', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Notice Content / Description</label>
+                <textarea
+                  rows={4}
+                  value={notice.description}
+                  onChange={(e) => handleNoticeChange(notice.id, 'description', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium"
+                />
+              </div>
 
-            {/* Notice PDF File Upload */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-rose-600" /> PDF Attachment
-              </label>
-              <input
-                id={`pdf-input-${notice.id}`}
-                type="file"
-                accept="application/pdf"
-                onChange={(e) => handleNoticePDFUpload(notice.id, e)}
-                className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-rose-600 file:text-white hover:file:bg-rose-700 cursor-pointer"
-              />
-              {notice.pdfName && (
-                <div className="flex items-center justify-between text-xs bg-rose-50 border border-rose-200 p-2 rounded-lg text-rose-900 mt-2">
-                  <span className="truncate font-bold flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5 text-rose-600 shrink-0" /> {notice.pdfName}
-                  </span>
-                  <button
-                    onClick={() => handleRemoveNoticePDF(notice.id)}
-                    className="text-rose-700 font-bold hover:underline ml-2 cursor-pointer text-[11px]"
-                  >
-                    Remove
-                  </button>
-                </div>
-              )}
+              {/* Notice PDF File Upload & File Name Display */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <FileText className="w-4 h-4 text-rose-600" /> PDF Attachment File
+                </label>
+                <input
+                  id={`pdf-input-${notice.id}`}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => handleNoticePDFUpload(notice.id, e)}
+                  className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-rose-600 file:text-white hover:file:bg-rose-700 cursor-pointer"
+                />
+                {displayPdfName && (
+                  <div className="flex items-center justify-between text-xs bg-rose-50 border border-rose-200 p-2 rounded-lg text-rose-900 mt-2">
+                    <span className="truncate font-bold flex items-center gap-1">
+                      <FileText className="w-3.5 h-3.5 text-rose-600 shrink-0" /> {displayPdfName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNoticePDF(notice.id)}
+                      className="text-rose-700 font-bold hover:underline ml-2 cursor-pointer text-[11px] shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -529,6 +602,7 @@ export default function AdminPage() {
           <Gift className="w-5 h-5 text-teal-600" /> Schemes & Articles ({formData.schemes.length})
         </h2>
         <button
+          type="button"
           onClick={handleAddScheme}
           className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
         >
@@ -537,63 +611,82 @@ export default function AdminPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {formData.schemes.map((scheme, index) => (
-          <div key={scheme.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs relative">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-xs font-bold text-slate-400">Scheme #{index + 1}</span>
-              <button
-                onClick={() => handleDeleteScheme(scheme.id)}
-                className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
-                title="Delete Scheme"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
+        {formData.schemes.map((scheme, index) => {
+          const displayImageName = getDisplayFileName(scheme.articleImageName, scheme.articleImage);
+          return (
+            <div key={scheme.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs relative">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <span className="text-xs font-bold text-slate-400">Scheme #{index + 1}</span>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteScheme(scheme.id)}
+                  className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
+                  title="Delete Scheme"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Product Name</label>
-              <input
-                type="text"
-                value={scheme.name}
-                onChange={(e) => handleSchemeChange(scheme.id, 'name', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-black"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Product Name</label>
+                <input
+                  type="text"
+                  value={scheme.name}
+                  onChange={(e) => handleSchemeChange(scheme.id, 'name', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-black"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Awarded Article Description</label>
-              <input
-                type="text"
-                value={scheme.awardedArticle}
-                onChange={(e) => handleSchemeChange(scheme.id, 'awardedArticle', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Awarded Article Description</label>
+                <input
+                  type="text"
+                  value={scheme.awardedArticle}
+                  onChange={(e) => handleSchemeChange(scheme.id, 'awardedArticle', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Purchase Quantity</label>
-              <input
-                type="number"
-                value={scheme.minPurchaseQty}
-                onChange={(e) => handleSchemeChange(scheme.id, 'minPurchaseQty', parseInt(e.target.value) || 0)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Minimum Purchase Quantity</label>
+                <input
+                  type="number"
+                  value={scheme.minPurchaseQty}
+                  onChange={(e) => handleSchemeChange(scheme.id, 'minPurchaseQty', parseInt(e.target.value) || 0)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
+                />
+              </div>
 
-            {/* Article Image File Picker */}
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-[#059669]" /> Article Image File Picker
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleArticleImageUpload(scheme.id, e)}
-                className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
-              />
+              {/* Article Image File Picker & File Name Display */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <label className="block text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-[#059669]" /> Article Image File
+                </label>
+                <input
+                  id={`scheme-img-input-${scheme.id}`}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleArticleImageUpload(scheme.id, e)}
+                  className="block w-full text-xs text-slate-600 file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                />
+                {displayImageName && (
+                  <div className="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-200 p-2 rounded-lg text-emerald-900 mt-2">
+                    <span className="truncate font-bold flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {displayImageName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveArticleImage(scheme.id)}
+                      className="text-rose-700 font-bold hover:underline ml-2 cursor-pointer text-[11px] shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -605,6 +698,7 @@ export default function AdminPage() {
           <Users className="w-5 h-5 text-[#059669]" /> Sales Representatives ({formData.salesTeam.length})
         </h2>
         <button
+          type="button"
           onClick={handleAddSales}
           className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shrink-0"
         >
@@ -614,10 +708,11 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {formData.salesTeam.map((sales, index) => (
-          <div key={sales.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-xs relative">
+          <div key={sales.id} className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-3 shadow-xs relative">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <span className="text-xs font-bold text-slate-400">Sales Rep #{index + 1}</span>
+              <span className="text-xs font-bold text-slate-400">Representative #{index + 1}</span>
               <button
+                type="button"
                 onClick={() => handleDeleteSales(sales.id)}
                 className="text-rose-600 hover:text-rose-800 p-1.5 rounded-lg hover:bg-rose-50 cursor-pointer"
                 title="Delete Representative"
@@ -637,7 +732,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Designation Role</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Role / Division</label>
               <input
                 type="text"
                 value={sales.role}
@@ -647,7 +742,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Territory / Beat Area</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Assigned Territory</label>
               <input
                 type="text"
                 value={sales.territory}
@@ -657,7 +752,7 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Primary Mobile Phone</label>
               <input
                 type="text"
                 value={sales.phone}
@@ -667,12 +762,12 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Operator Number</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Operator / Hotline Number</label>
               <input
                 type="text"
                 value={sales.operatorNumber}
                 onChange={(e) => handleSalesChange(sales.id, 'operatorNumber', e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold"
               />
             </div>
           </div>
@@ -682,125 +777,124 @@ export default function AdminPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-28">
-      {/* Sticky Top Header */}
-      <header className="bg-slate-900 text-white sticky top-0 z-50 border-b border-slate-800 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+      {/* Toast Notification */}
+      {showSuccessToast && (
+        <div className="fixed top-5 right-5 z-50 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-bounce">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="text-sm font-bold">Content successfully saved & synced to live website!</span>
+        </div>
+      )}
+
+      {/* Top Header */}
+      <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors flex items-center gap-1.5 text-xs font-bold shrink-0">
-              <ArrowLeft className="w-4 h-4" /> Live Website
+            <Link
+              href="/"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+              title="Return to Site"
+            >
+              <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-base sm:text-lg font-black text-white tracking-wide truncate">
-              ADMIN
-            </h1>
+            <div>
+              <h1 className="text-base sm:text-lg font-black tracking-tight text-white flex items-center gap-2">
+                ATC Pharma Admin Dashboard
+              </h1>
+              <p className="text-[11px] text-emerald-400 font-semibold hidden sm:block">
+                Logged in as {user.email}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Logged In User Profile Badge */}
-            <span className="hidden md:inline-block text-[11px] font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-3 py-1 rounded-full truncate">
-              {user.email || 'Authenticated Admin'}
-            </span>
-
-            {/* Logout Button */}
             <button
-              onClick={handleLogout}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-rose-900/60 border border-rose-800 hover:bg-rose-800 text-rose-200 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut className="w-3.5 h-3.5" /> <span className="hidden sm:inline">Log Out</span>
-            </button>
-
-            {/* Desktop Save Button */}
-            <button
+              type="button"
               onClick={handleSave}
               disabled={isUploading}
-              className="hidden sm:flex px-5 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-black text-xs sm:text-sm items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#059669] to-[#0d9488] hover:from-[#047857] hover:to-[#0f766e] text-white font-extrabold text-xs sm:text-sm flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
             >
-              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save Changes
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" /> Save & Sync Site
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-rose-900/50 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Floating Fixed Save Button Bar for Mobile View */}
-      <div className="sm:hidden fixed bottom-4 left-4 right-4 z-50">
-        <button
-          onClick={handleSave}
-          disabled={isUploading}
-          className="w-full py-3.5 px-6 rounded-2xl bg-[#059669] active:bg-[#047857] text-white font-black text-sm flex items-center justify-center gap-2.5 shadow-2xl border border-emerald-400/30 backdrop-blur-md cursor-pointer disabled:opacity-50"
-        >
-          {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-          Save Changes
-        </button>
-      </div>
-
-      {/* Success Toast Notification */}
-      {showSuccessToast && (
-        <div className="fixed top-20 right-4 left-4 sm:left-auto sm:right-6 bg-[#059669] text-white px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center justify-center gap-2 font-bold text-xs sm:text-sm animate-bounce">
-          <CheckCircle2 className="w-5 h-5 shrink-0" /> All Content Changes Saved Successfully!
-        </div>
-      )}
-
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8">
-
-        {/* Desktop Navigation Tabs (Visible on Desktop sm:flex) */}
-        <div className="hidden sm:flex overflow-x-auto gap-2 border-b border-slate-300 pb-3 mb-6 scrollbar-none">
+      {/* Main Admin Body */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
           <button
+            type="button"
             onClick={() => setActiveTab('branch')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'branch'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 cursor-pointer ${
+              activeTab === 'branch'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
           >
-            <Building2 className="w-4 h-4" /> Branch Info & Header
+            <Building2 className="w-4 h-4 text-[#059669]" /> Branch & Manager Info
           </button>
+
           <button
+            type="button"
             onClick={() => setActiveTab('notices')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'notices'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 cursor-pointer ${
+              activeTab === 'notices'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
           >
-            <Bell className="w-4 h-4" /> Notices ({formData.notices.length})
+            <Bell className="w-4 h-4 text-amber-500" /> Branch Notices ({formData.notices.length})
           </button>
+
           <button
+            type="button"
             onClick={() => setActiveTab('schemes')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'schemes'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 cursor-pointer ${
+              activeTab === 'schemes'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
           >
-            <Gift className="w-4 h-4" /> Schemes & Articles ({formData.schemes.length})
+            <Gift className="w-4 h-4 text-teal-500" /> Schemes & Articles ({formData.schemes.length})
           </button>
+
           <button
+            type="button"
             onClick={() => setActiveTab('sales')}
-            className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all cursor-pointer ${activeTab === 'sales'
-              ? 'bg-emerald-600 text-white shadow-md'
-              : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 cursor-pointer ${
+              activeTab === 'sales'
+                ? 'bg-slate-900 text-white shadow-md'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
           >
-            <Users className="w-4 h-4" /> Sales Reps ({formData.salesTeam.length})
+            <Users className="w-4 h-4 text-emerald-500" /> Sales Representatives ({formData.salesTeam.length})
           </button>
         </div>
 
-        {/* MOBILE VIEW: Render ALL Sections Vertically in a Single Page */}
-        <div className="sm:hidden space-y-8">
-          <section id="mobile-branch">{renderBranchSection()}</section>
-          <section id="mobile-notices">{renderNoticesSection()}</section>
-          <section id="mobile-schemes">{renderSchemesSection()}</section>
-          <section id="mobile-sales">{renderSalesSection()}</section>
-        </div>
-
-        {/* DESKTOP VIEW: Render Only Selected Active Tab */}
-        <div className="hidden sm:block">
-          {activeTab === 'branch' && renderBranchSection()}
-          {activeTab === 'notices' && renderNoticesSection()}
-          {activeTab === 'schemes' && renderSchemesSection()}
-          {activeTab === 'sales' && renderSalesSection()}
-        </div>
-
+        {/* Tab Panel Content */}
+        {activeTab === 'branch' && renderBranchSection()}
+        {activeTab === 'notices' && renderNoticesSection()}
+        {activeTab === 'schemes' && renderSchemesSection()}
+        {activeTab === 'sales' && renderSalesSection()}
       </div>
     </div>
   );

@@ -16,7 +16,8 @@ const EMPTY_SITE_CONTENT: SiteContent = {
     email: '',
     address: '',
     operatingHours: '',
-    heroImage: ''
+    heroImage: '',
+    heroImageName: ''
   },
   notices: [],
   schemes: [],
@@ -41,7 +42,8 @@ function sanitizeContentForFirestore(data: SiteContent): SiteContent {
       email: data.branchInfo?.email || '',
       address: data.branchInfo?.address || '',
       operatingHours: data.branchInfo?.operatingHours || '',
-      heroImage: data.branchInfo?.heroImage || ''
+      heroImage: data.branchInfo?.heroImage || '',
+      heroImageName: data.branchInfo?.heroImageName || ''
     },
     notices: (data.notices || []).map((notice) => ({
       id: notice.id || `notice-${Date.now()}`,
@@ -57,7 +59,8 @@ function sanitizeContentForFirestore(data: SiteContent): SiteContent {
       name: scheme.name || '',
       minPurchaseQty: scheme.minPurchaseQty || 0,
       awardedArticle: scheme.awardedArticle || '',
-      articleImage: scheme.articleImage || ''
+      articleImage: scheme.articleImage || '',
+      articleImageName: scheme.articleImageName || ''
     })),
     salesTeam: (data.salesTeam || []).map((sales) => ({
       id: sales.id || `sales-${Date.now()}`,
