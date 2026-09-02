@@ -1,11 +1,20 @@
+import { optimizeImageForUpload } from '@/utils/imageOptimizer';
+
 /**
  * Uploads files (PDFs & Images) to GitHub API Media Storage via `/api/upload`.
- * Returns a short HTTPS CDN URL (e.g. https://raw.githubusercontent.com/junedpharma/portfolio/main/public/uploads/...)
- * 100% FREE FOREVER with 0 credit cards, 0 billing setup, and 0 Firestore document quota errors!
+ * Optimizes large camera photos (> 1.5 MB) on client side to prevent Vercel 4.5 MB payload errors.
  */
 export async function uploadFileToFirebaseStorage(file: File, folder: string = 'uploads'): Promise<string> {
+  // Check PDF size limit for Vercel serverless function payload (4.5 MB)
+  if (file.type === 'application/pdf' && file.size > 4.2 * 1024 * 1024) {
+    throw new Error(`PDF file size (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds Vercel's 4.5 MB limit. Please compress the PDF file before uploading.`);
+  }
+
+  // Optimize large images to high-definition 1920px canvas (~400 KB)
+  const readyFile = await optimizeImageForUpload(file);
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', readyFile);
   formData.append('folder', folder);
 
   const response = await fetch('/api/upload', {
