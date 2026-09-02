@@ -3,7 +3,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { SiteContent } from '@/data/contentStore';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import {
+  doc,
+  onSnapshot,
+  setDoc,
+  collection,
+  addDoc,
+  getDocs,
+  deleteDoc,
+  query,
+  orderBy
+} from 'firebase/firestore';
 
 const FIRESTORE_COLLECTION = 'portfolio';
 const FIRESTORE_DOC_ID = 'siteContent';
@@ -24,9 +34,17 @@ const EMPTY_SITE_CONTENT: SiteContent = {
   salesTeam: []
 };
 
+export interface HistoryLogItem {
+  id: string;
+  timestamp: string;
+  content: SiteContent;
+}
+
 interface ContentContextType {
   content: SiteContent;
   updateContent: (newContent: SiteContent) => Promise<void>;
+  historyLogs: HistoryLogItem[];
+  fetchHistoryLogs: () => Promise<HistoryLogItem[]>;
   isFirestoreSyncing: boolean;
 }
 
@@ -75,6 +93,7 @@ function sanitizeContentForFirestore(data: SiteContent): SiteContent {
 
 export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(EMPTY_SITE_CONTENT);
+  const [historyLogs, setHistoryLogs] = useState<HistoryLogItem[]>([]);
   const [isFirestoreSyncing, setIsFirestoreSyncing] = useState(true);
 
   useEffect(() => {
@@ -98,15 +117,60 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return () => unsubscribe();
   }, []);
 
+  const fetchHistoryLogs = async (): Promise<HistoryLogItem[]> => {
+    try {
+      const historyColRef = collection(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, 'history');
+      const q = query(historyColRef, orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+
+      const logs: HistoryLogItem[] = snapshot.docs.map((d) => ({
+        id: d.id,
+        timestamp: d.data().timestamp || new Date().toISOString(),
+        content: sanitizeContentForFirestore(d.data().content as SiteContent)
+      }));
+
+      setHistoryLogs(logs.slice(0, 10));
+      return logs.slice(0, 10);
+    } catch (err) {
+      console.warn('Failed to fetch history logs from Firestore:', err);
+      return [];
+    }
+  };
+
   const updateContent = async (newContent: SiteContent) => {
     const sanitizedData = sanitizeContentForFirestore(newContent);
     setContent(sanitizedData);
+
+    // Save main document
     const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
     await setDoc(contentDocRef, sanitizedData);
+
+    // Save version snapshot log to Firestore subcollection & prune beyond 10
+    try {
+      const historyColRef = collection(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, 'history');
+      await addDoc(historyColRef, {
+        timestamp: new Date().toISOString(),
+        content: sanitizedData
+      });
+
+      const q = query(historyColRef, orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.docs.length > 10) {
+        const excessDocs = snapshot.docs.slice(10);
+        for (const docToDelete of excessDocs) {
+          await deleteDoc(docToDelete.ref);
+        }
+      }
+
+      await fetchHistoryLogs();
+    } catch (histErr) {
+      console.warn('History log saving warning:', histErr);
+    }
   };
 
   return (
-    <ContentContext.Provider value={{ content, updateContent, isFirestoreSyncing }}>
+    <ContentContext.Provider value={{ content, updateContent, historyLogs, fetchHistoryLogs, isFirestoreSyncing }}>
       {children}
     </ContentContext.Provider>
   );

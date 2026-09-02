@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useContent } from '@/context/ContentContext';
+import { useContent, HistoryLogItem } from '@/context/ContentContext';
 import { SiteContent, NoticeItem, SchemeProduct, SalesRep } from '@/data/contentStore';
 import { uploadFileToFirebaseStorage } from '@/lib/storage';
 import { auth } from '@/lib/firebase';
@@ -11,15 +11,18 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Mail, KeyRound } from 'lucide-react';
+import { Save, Plus, Trash2, ArrowLeft, Building2, Bell, Gift, Users, CheckCircle2, FileText, Image as ImageIcon, Loader2, LogOut, Mail, KeyRound, History, RotateCcw, X } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminPage() {
-  const { content, updateContent } = useContent();
+  const { content, updateContent, fetchHistoryLogs, historyLogs } = useContent();
   const [formData, setFormData] = useState<SiteContent>(content);
   const [activeTab, setActiveTab] = useState<'branch' | 'notices' | 'schemes' | 'sales'>('branch');
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyList, setHistoryList] = useState<HistoryLogItem[]>([]);
 
   // Firebase Auth State
   const [user, setUser] = useState<User | null>(null);
@@ -97,6 +100,20 @@ export default function AdminPage() {
     await updateContent(formData);
     setShowSuccessToast(true);
     setTimeout(() => setShowSuccessToast(false), 3000);
+  };
+
+  const handleOpenHistory = async () => {
+    setShowHistoryModal(true);
+    setIsLoadingHistory(true);
+    const logs = await fetchHistoryLogs();
+    setHistoryList(logs);
+    setIsLoadingHistory(false);
+  };
+
+  const handleRestoreVersion = (versionContent: SiteContent) => {
+    setFormData(versionContent);
+    setShowHistoryModal(false);
+    alert('Restored historical version into form. Click "Save & Sync Site" to apply this version live!');
   };
 
   // Branch Info Handlers
@@ -786,6 +803,79 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Version History Modal Drawer */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <History className="w-5 h-5 text-emerald-600" /> Version History Logs (Last 10 Saves)
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {isLoadingHistory ? (
+                <div className="py-12 text-center text-slate-500 font-semibold flex flex-col items-center gap-2">
+                  <Loader2 className="w-6 h-6 text-emerald-600 animate-spin" /> Loading Version History...
+                </div>
+              ) : historyList.length === 0 ? (
+                <div className="py-12 text-center text-slate-400 font-semibold text-xs">
+                  No version logs recorded yet. Every time you save content, a version snapshot will appear here.
+                </div>
+              ) : (
+                historyList.map((log, index) => {
+                  const savedDate = new Date(log.timestamp);
+                  const formattedDate = isNaN(savedDate.getTime())
+                    ? log.timestamp
+                    : savedDate.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
+
+                  return (
+                    <div key={log.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-4 hover:border-emerald-300 transition-all">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-black bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md">
+                            Version #{historyList.length - index}
+                          </span>
+                          <span className="text-xs font-bold text-slate-700">{formattedDate}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          Manager: {log.content.branchInfo.managerName || 'Patel Juned'} • {log.content.notices.length} Notices • {log.content.schemes.length} Schemes
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreVersion(log.content)}
+                        className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shrink-0 transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" /> Restore
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 text-right">
+              <button
+                type="button"
+                onClick={() => setShowHistoryModal(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+              >
+                Close History
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <header className="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
@@ -808,6 +898,16 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleOpenHistory}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer"
+              title="View Last 10 Version History Logs"
+            >
+              <History className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Version History</span>
+            </button>
+
             <button
               type="button"
               onClick={handleSave}
