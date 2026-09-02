@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
-    const folder = (formData.get('folder') as string) || 'notice-pdfs';
+    const folder = (formData.get('folder') as string) || 'uploads';
 
     if (!file) {
       return NextResponse.json({ error: 'No file selected for upload' }, { status: 400 });
@@ -26,12 +26,13 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     // Sanitize filename cleanly, preserving extension
-    const fileExt = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.pdf';
+    const fileExt = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.jpg';
     const rawName = file.name.slice(0, file.name.lastIndexOf('.')) || 'file';
     const cleanBaseName = rawName.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').slice(0, 30);
-    const fileName = `${Date.now()}_${cleanBaseName || 'document'}${fileExt}`;
+    const fileName = `${Date.now()}_${cleanBaseName || 'media'}${fileExt}`;
 
-    const githubFilePath = `public/uploads/${folder}/${fileName}`;
+    const targetFolder = folder && folder !== 'uploads' ? `uploads/${folder}` : 'uploads';
+    const githubFilePath = `public/${targetFolder}/${fileName}`;
     const githubUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${githubFilePath}`;
 
     const authHeader = token.startsWith('github_pat_') || token.startsWith('Bearer ')
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       const errJson = await res.json();
       console.error('GitHub API Commit Error:', errJson);
       return NextResponse.json(
-        { error: errJson.message || 'GitHub API rejected file commit. Ensure token has Contents: Write permissions for junedpharma/portfolio.' },
+        { error: errJson.message || 'GitHub API rejected file commit. Ensure token has Contents: Write permissions.' },
         { status: res.status }
       );
     }
