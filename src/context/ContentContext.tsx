@@ -116,7 +116,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const contentDocRef = doc(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID);
     await setDoc(contentDocRef, sanitizedData);
 
-    // 2. Save last 10 version history logs to Firestore subcollection & prune older snapshots
+    // 2. Save last 10 version history logs to Firestore subcollection & delete oldest when limit of 10 is reached
     try {
       const historyColRef = collection(db, FIRESTORE_COLLECTION, FIRESTORE_DOC_ID, 'history');
       await addDoc(historyColRef, {
@@ -124,12 +124,14 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         content: sanitizedData
       });
 
-      const q = query(historyColRef, orderBy('timestamp', 'desc'));
+      // Query sorted by timestamp ascending (oldest first at index 0)
+      const q = query(historyColRef, orderBy('timestamp', 'asc'));
       const snapshot = await getDocs(q);
 
       if (snapshot.docs.length > 10) {
-        const excessDocs = snapshot.docs.slice(10);
-        for (const docToDelete of excessDocs) {
+        // Target and delete oldest documents exceeding 10
+        const oldestDocsToDelete = snapshot.docs.slice(0, snapshot.docs.length - 10);
+        for (const docToDelete of oldestDocsToDelete) {
           await deleteDoc(docToDelete.ref);
         }
       }
