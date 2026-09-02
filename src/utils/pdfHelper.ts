@@ -2,28 +2,51 @@ function triggerDownload(url: string, fileName: string) {
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
+  document.body.appendChild(link);
   link.click();
+  link.remove();
 }
 
 /**
- * Utility to convert base64 / Data URL PDFs or circular images into a Browser Blob URL.
- * Solves browser security blocks on direct data URL navigation and provides smooth viewing.
+ * Utility to open PDFs & circulars directly inline in a browser tab.
+ * Bypasses GitHub raw Content-Disposition headers by fetching arrayBuffer -> Blob URL.
  */
-export function openOrDownloadPDF(
+export async function openOrDownloadPDF(
   pdfDataUrl: string,
   fileName: string = 'Branch_Notice_Circular.pdf',
   action: 'view' | 'download' = 'view'
 ) {
   try {
+    // If HTTP/HTTPS URL (e.g. raw.githubusercontent.com)
     if (pdfDataUrl.startsWith('http://') || pdfDataUrl.startsWith('https://')) {
       if (action === 'download') {
         triggerDownload(pdfDataUrl, fileName);
-      } else {
-        window.open(pdfDataUrl, '_blank', 'noopener,noreferrer');
+        return;
       }
-      return;
+
+      // Fetch bytes directly to display inline in browser PDF viewer
+      try {
+        const response = await fetch(pdfDataUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const isPdf = pdfDataUrl.toLowerCase().endsWith('.pdf') || pdfDataUrl.includes('pdf');
+        const mimeType = isPdf ? 'application/pdf' : 'image/jpeg';
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const win = window.open(blobUrl, '_blank');
+        if (!win) {
+          triggerDownload(pdfDataUrl, fileName);
+        }
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 120000);
+        return;
+      } catch (fetchErr) {
+        console.warn('Direct fetch failed, falling back to window.open:', fetchErr);
+        window.open(pdfDataUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
     }
 
+    // Base64 Data URL processing
     const mimeType = pdfDataUrl.startsWith('data:')
       ? pdfDataUrl.split(';')[0].split(':')[1] || 'application/pdf'
       : 'application/pdf';
@@ -50,4 +73,3 @@ export function openOrDownloadPDF(
     alert('Unable to open document. Please try again.');
   }
 }
-
