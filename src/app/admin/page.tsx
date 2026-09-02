@@ -140,11 +140,16 @@ export default function AdminPage() {
         alert(uploadErr.message || 'PDF upload failed. Please try a smaller PDF file.');
       } finally {
         setIsUploading(false);
+        e.target.value = '';
       }
     }
   };
 
   const handleRemoveNoticePDF = (id: string) => {
+    const inputEl = document.getElementById(`pdf-input-${id}`) as HTMLInputElement | null;
+    if (inputEl) {
+      inputEl.value = '';
+    }
     setFormData((prev) => ({
       ...prev,
       notices: prev.notices.map((notice) =>
@@ -491,6 +496,7 @@ export default function AdminPage() {
                 <FileText className="w-4 h-4 text-rose-600" /> PDF Attachment
               </label>
               <input
+                id={`pdf-input-${notice.id}`}
                 type="file"
                 accept="application/pdf"
                 onChange={(e) => handleNoticePDFUpload(notice.id, e)}
